@@ -5,6 +5,9 @@ class Settings(BaseSettings):
     # App
     APP_ENV: str = "local"
     
+    # Server
+    WEB_PORT: int = 18050
+    
     # SSH Tunnel
     SSH_HOST: str = "115.190.90.61"
     SSH_PORT: int = 22

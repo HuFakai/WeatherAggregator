@@ -21,6 +21,9 @@
 ```ini
 APP_ENV=production
 
+# Server Port
+WEB_PORT=18050
+
 # MongoDB (宿主机)
 MONGO_HOST=host.docker.internal
 MONGO_PORT=27017
@@ -91,15 +94,108 @@ docker compose up -d --build
 现在的 Docker 版本通常使用 `docker compose` (中间有空格) 而不是 `docker-compose` (中间有连字符)。
 如果遇到此错误，请尝试使用 `docker compose up -d --build`。
 
-## 4. 更新部署
-代码更新后，执行：
+## 4. 服务管理
+
+### 4.1 更新代码部署
+代码更新后重新部署:
 ```bash
+# 拉取最新代码
+git pull
+
+# 重新构建并启动
 docker compose down
 docker compose up -d --build
 ```
-## 5. 定时时间更新
-定时时间更新后，执行：
-重启 beat 服务以重新加载调度
+
+### 4.2 重启服务
+修改配置后重启服务:
+
+**重启所有服务:**
 ```bash
+docker compose restart
+```
+
+**重启指定服务:**
+```bash
+# 重启 Web 应用
+docker compose restart app
+
+# 重启 Worker
+docker compose restart worker
+
+# 重启 Beat (定时任务调度器)
 docker compose restart beat
+```
+
+### 4.3 更改端口配置
+如需更改服务端口（例如从 18050 改为 8080）:
+
+1. **修改 `.env` 文件:**
+   ```bash
+   WEB_PORT=8080
+   ```
+
+2. **重新构建并启动容器:**
+   ```bash
+   docker compose down
+   docker compose up -d --build
+   ```
+
+3. **验证新端口:**
+   ```bash
+   # 查看容器日志确认端口
+   docker compose logs app | grep "Uvicorn running"
+   
+   # 访问新端口
+   curl http://localhost:8080
+   ```
+
+### 4.4 更新定时任务配置
+修改定时任务时间后:
+```bash
+# 仅重启 beat 服务以重新加载调度
+docker compose restart beat
+```
+
+### 4.5 查看服务状态
+```bash
+# 查看所有容器状态
+docker compose ps
+
+# 查看实时日志
+docker compose logs -f
+
+# 查看特定服务日志
+docker compose logs -f app
+docker compose logs -f worker
+docker compose logs -f beat
+```
+
+## 5. 常用运维命令
+
+### 5.1 停止服务
+```bash
+# 停止所有服务（容器保留）
+docker compose stop
+
+# 停止并删除容器
+docker compose down
+
+# 停止并删除容器、网络、镜像
+docker compose down --rmi all
+```
+
+### 5.2 清理日志
+```bash
+# 清理过期日志文件（保留最近7天）
+find logs/ -name "*.log" -mtime +7 -delete
+```
+
+### 5.3 备份数据库
+```bash
+# MongoDB 备份
+docker exec -it <mongo_container> mongodump --out /backup
+
+# Redis 备份
+docker exec -it <redis_container> redis-cli BGSAVE
 ```

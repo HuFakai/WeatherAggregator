@@ -6,7 +6,7 @@ services:
     container_name: weather_app
     restart: always
     ports:
-      - "18050:18050"
+      - "${WEB_PORT:-18050}:${WEB_PORT:-18050}"
     volumes:
       - ./logs:/app/logs
     env_file:
@@ -19,7 +19,7 @@ services:
       - REDIS_HOST=host.docker.internal
     extra_hosts:
       - "host.docker.internal:host-gateway"
-    command: uvicorn app.main:app --host 0.0.0.0 --port 18050
+    command: uvicorn app.main:app --host 0.0.0.0 --port ${WEB_PORT:-18050}
 
   worker:
     build: .

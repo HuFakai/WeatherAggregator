@@ -5,6 +5,7 @@ FROM python:3.11-slim
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 ENV TZ=Asia/Shanghai
+ENV WEB_PORT=18050
 
 # Set work directory
 WORKDIR /app
@@ -24,8 +25,8 @@ COPY . .
 # Create logs directory
 RUN mkdir -p logs
 
-# Expose port
-EXPOSE 18050
+# Expose port (can be overridden by WEB_PORT env var)
+EXPOSE ${WEB_PORT}
 
 # Default command (can be overridden in docker-compose)
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "18050"]
+CMD uvicorn app.main:app --host 0.0.0.0 --port ${WEB_PORT}
