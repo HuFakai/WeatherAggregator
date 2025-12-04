@@ -51,53 +51,71 @@ docker-compose up -d
 ### 获取天气数据
 
 ```bash
-GET /api/v1/weather/{city_code}
+GET /api/v1/weather/{city}
 ```
 
 **参数说明:**
-- `city_code`: 城市代码（6位行政区划代码）
-- `channel`: (可选) 指定渠道，默认聚合所有渠道
+- `city`: 城市名称或 ID (如: 北京, 101010100, 110100)
+- `key`: (必填) API 访问密钥
+- `channel`: (可选) 指定渠道(yiketianqi/hefeng),默认聚合所有渠道
 
 **示例:**
 
 ```bash
-# 获取北京天气（聚合所有渠道）
-curl http://localhost:18050/api/v1/weather/110100
+# 使用城市代码获取天气(聚合所有渠道)
+curl "http://localhost:18050/api/v1/weather/110100?key=your_api_key"
 
-# 获取北京天气（指定易客天气）
-curl http://localhost:18050/api/v1/weather/110100?channel=yiketianqi
+# 使用城市名称获取天气
+curl "http://localhost:18050/api/v1/weather/北京?key=your_api_key"
+
+# 指定易客天气渠道
+curl "http://localhost:18050/api/v1/weather/110100?key=your_api_key&channel=yiketianqi"
 ```
 
 **响应示例:**
 
 ```json
 {
-  "code": 200,
-  "message": "success",
-  "data": {
-    "city_code": "110100",
-    "city_name": "北京",
-    "channels": {
-      "yiketianqi": {
+  "_id": "110100",
+  "city_name": "北京",
+  "last_updated_at": "2025-12-04T09:42:02.123456+08:00",
+  "sources": {
+    "hefeng": [
+      {
         "date": "2025-12-04",
-        "week": "星期三",
-        "weather": "晴",
-        "temperature": "10°C",
-        "humidity": "30%",
+        "temp_high": 10,
+        "temp_low": -2,
+        "weather_day": "晴",
+        "weather_night": "晴",
+        "humidity": 30,
         "wind_direction": "北风",
-        "wind_scale": "3级"
-      },
-      "hefeng": {
-        "date": "2025-12-04",
-        "temp": "10",
-        "weather": "晴",
-        "humidity": "30",
-        "windDir": "北",
-        "windScale": "3"
+        "wind_scale": "3-4级",
+        "aqi": null,
+        "aqi_level": null,
+        "lifestyle": []
       }
-    },
-    "updated_at": "2025-12-04T09:42:02",
-    "cached": false
+    ],
+    "yiketianqi": [
+      {
+        "date": "2025-12-04",
+        "temp_high": 10,
+        "temp_low": -2,
+        "weather_day": "晴",
+        "weather_night": "晴",
+        "humidity": 30,
+        "wind_direction": "无持续风向",
+        "wind_scale": "<3级",
+        "aqi": 85,
+        "aqi_level": "良",
+        "lifestyle": [
+          {
+            "title": "紫外线指数",
+            "level": "中等",
+            "desc": "涂擦SPF大于15、PA+防晒护肤品。"
+          }
+        ]
+      }
+    ]
   }
 }
 ```
