@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>聚合天气管理</title>
+    <link rel="stylesheet" href="/static/css/admin.css?v=4">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal" style="display: flex;">
+        <div class="modal-content login-content">
+            <h2>管理员密钥</h2>
+            <p>请输入管理员密钥以继续</p>
+            <div class="form-group">
+                <input type="password" id="adminKeyInput" placeholder="Admin Key">
+            </div>
+            <button id="loginBtn" class="btn-primary" style="width: 100%">登录</button>
+            <p id="loginError" class="error-msg"></p>
+        </div>
+    </div>
+
+    <div class="app-container" id="appContainer">
+        <header class="top-bar">
+            <div class="logo">
+                <h1>聚合天气管理</h1>
+            </div>
+            <div class="user-actions">
+                <button id="logoutBtn" class="btn-text">退出</button>
+            </div>
+        </header>
+
+        <!-- Global Stats Overview -->
+        <div class="dashboard-overview">
+            <div class="overview-card">
+                <div class="overview-label">调用次数统计 (TODAY)</div>
+                <div class="overview-value" id="totalClientUsage">--</div>
+            </div>
+            <div class="overview-divider"></div>
+            <div id="channelOverview" class="channel-overview-group">
+                <!-- Channel stats will be injected here -->
+            </div>
+        </div>
+
+        <nav class="main-nav">
+            <button class="nav-item active" data-tab="clients">客户端密钥</button>
+            <button class="nav-item" data-tab="channels">渠道状态</button>
+        </nav>
+
+        <!-- Client Keys Section -->
+        <div id="section-clients" class="tab-section">
+            <div class="section-header">
+                <h2>密钥管理</h2>
+                <button class="btn-primary" onclick="openAddClientKey()">+ 新建密钥</button>
+            </div>
+            <div id="clientKeyList" class="card-grid">
+                <!-- Client keys will be rendered here -->
+            </div>
+        </div>
+
+        <!-- Channel Config Section -->
+        <div id="section-channels" class="tab-section" style="display: none;">
+            <div class="section-header">
+                <h2>渠道管理</h2>
+            </div>
+            <div id="channelList" class="card-grid">
+                <!-- Channels will be rendered here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Client Key Modal -->
+    <div id="createKeyModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>新建客户端密钥</h2>
+            <div class="form-group">
+                <label>名称/描述</label>
+                <input type="text" id="newKeyName" placeholder="例如: 我的移动应用">
+            </div>
+            <div class="modal-actions">
+                <button id="submitCreateKey" class="btn-primary">创建</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Channel Key Modal -->
+    <div id="addChannelKeyModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>添加渠道 API Key</h2>
+            <div class="form-group">
+                <label>API Key</label>
+                <input type="text" id="newChannelKey" placeholder="输入 API Key">
+                <p class="hint">对于百度/和风，格式通常为 ID|Key 或 AK|SK</p>
+            </div>
+            <div class="form-group">
+                <label>每日限额</label>
+                <input type="number" id="newChannelLimit" value="2000" placeholder="例如: 2000">
+            </div>
+            <div class="form-group">
+                <label>备注描述</label>
+                <input type="text" id="newChannelDesc" placeholder="例如: 备用 Key 1">
+            </div>
+            <div class="modal-actions">
+                <button id="submitAddChannelKey" class="btn-primary">添加</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Client Key Modal -->
+    <div id="editKeyModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>编辑密钥配置</h2>
+            <input type="hidden" id="editKeyId">
+            <div class="form-group">
+                <label>QPM 限制 (每分钟请求数, 0为不限)</label>
+                <input type="number" id="editKeyQpm" placeholder="例如: 60">
+            </div>
+            <div class="form-group">
+                <label>IP 白名单 (每行一个 IP)</label>
+                <textarea id="editKeyIpList" rows="4" placeholder="192.168.1.1&#10;10.0.0.1"></textarea>
+            </div>
+            <div class="form-group checkbox-group">
+                <input type="checkbox" id="editKeyIpEnabled">
+                <label for="editKeyIpEnabled">启用 IP 白名单</label>
+            </div>
+            <div class="modal-actions">
+                <button id="submitEditKey" class="btn-primary">保存修改</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/admin.js?v=3"></script>
+</body>
+
+</html>

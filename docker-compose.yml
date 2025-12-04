@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: weather_app
+    restart: always
+    ports:
+      - "18050:18050"
+    volumes:
+      - ./logs:/app/logs
+    env_file:
+      - .env
+    environment:
+      - APP_ENV=production
+      # Connect to host machine's MongoDB and Redis
+      # For Linux hosts (like 1panel), use host.docker.internal with extra_hosts
+      - MONGO_HOST=host.docker.internal
+      - REDIS_HOST=host.docker.internal
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: uvicorn app.main:app --host 0.0.0.0 --port 18050
+
+  worker:
+    build: .
+    container_name: weather_worker
+    restart: always
+    volumes:
+      - ./logs:/app/logs
+    env_file:
+      - .env
+    environment:
+      - APP_ENV=production
+      - MONGO_HOST=host.docker.internal
+      - REDIS_HOST=host.docker.internal
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: celery -A app.celery_app worker -l info
+
+  beat:
+    build: .
+    container_name: weather_beat
+    restart: always
+    volumes:
+      - ./logs:/app/logs
+    env_file:
+      - .env
+    environment:
+      - APP_ENV=production
+      - MONGO_HOST=host.docker.internal
+      - REDIS_HOST=host.docker.internal
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: celery -A app.celery_app beat -l info
