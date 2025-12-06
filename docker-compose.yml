@@ -13,6 +13,7 @@ services:
       - .env
     environment:
       - APP_ENV=production
+      - SERVICE_NAME=web
       # Connect to host machine's MongoDB and Redis
       # For Linux hosts (like 1panel), use host.docker.internal with extra_hosts
       - MONGO_HOST=host.docker.internal
@@ -31,6 +32,7 @@ services:
       - .env
     environment:
       - APP_ENV=production
+      - SERVICE_NAME=worker
       - MONGO_HOST=host.docker.internal
       - REDIS_HOST=host.docker.internal
     extra_hosts:
@@ -47,6 +49,7 @@ services:
       - .env
     environment:
       - APP_ENV=production
+      - SERVICE_NAME=beat
       - MONGO_HOST=host.docker.internal
       - REDIS_HOST=host.docker.internal
     extra_hosts:
