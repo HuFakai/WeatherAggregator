@@ -1,151 +1,293 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" class="dark">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>聚合天气管理系统</title>
-    <!-- Use v5 for cache busting -->
-    <link rel="stylesheet" href="/static/css/admin.css?v=5">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
-        rel="stylesheet">
+    <title>聚合天气 | 管理控制台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Poppins', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="/static/css/admin.css?v=6">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style type="text/tailwindcss">
+        @layer base {
+            body {
+                @apply bg-slate-950 text-slate-200 font-['Inter'] selection:bg-blue-500/30;
+            }
+            h1, h2, h3, h4 {
+                @apply font-['Poppins'] font-semibold;
+            }
+        }
+
+        @layer components {
+            .glass-card {
+                @apply bg-slate-900/50 backdrop-blur-xl border border-slate-800 rounded-2xl shadow-2xl;
+            }
+            
+            .glass-input {
+                @apply bg-slate-900/80 border border-slate-700 rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition-all duration-200 placeholder:text-slate-500;
+            }
+            
+            .btn-primary {
+                @apply bg-blue-600 hover:bg-blue-500 text-white font-medium px-6 py-2.5 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20 active:scale-95 cursor-pointer;
+            }
+            
+            .btn-outline {
+                @apply border border-slate-700 hover:border-slate-500 hover:bg-slate-800 text-slate-300 font-medium px-4 py-2 rounded-lg transition-all duration-200 flex items-center gap-2 cursor-pointer;
+            }
+
+            .nav-item {
+                @apply px-4 py-2 rounded-lg text-slate-400 hover:text-white transition-all duration-200 cursor-pointer flex items-center gap-2;
+            }
+
+            .nav-item.active {
+                @apply bg-slate-800 text-white border border-slate-700;
+            }
+
+            .modal-overlay {
+                @apply fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 opacity-0 pointer-events-none transition-all duration-300;
+            }
+
+            .modal-overlay.active {
+                @apply opacity-100 pointer-events-auto;
+            }
+
+            .modal-container {
+                @apply glass-card w-full max-w-md p-8 transform scale-95 transition-all duration-300;
+            }
+
+            .modal-overlay.active .modal-container {
+                @apply scale-100;
+            }
+        }
+
+        /* Custom Gradients */
+        .bg-gradient-mesh {
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(37, 99, 235, 0.1) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(249, 115, 22, 0.05) 0px, transparent 50%);
+        }
+
+        .status-dot {
+            @apply w-2.5 h-2.5 rounded-full inline-block mr-2;
+        }
+
+        .status-active { @apply bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]; }
+        .status-inactive { @apply bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.5)]; }
+    </style>
 </head>
 
-<body>
+<body class="bg-slate-950 text-slate-200 min-h-screen bg-gradient-mesh">
     <!-- Login Modal -->
-    <div id="loginModal" class="modal" style="display: flex;">
-        <div class="modal-content login-content">
-            <div class="logo text-center" style="margin-bottom: 2rem;">
-                <h1>WEATHER<span style="color:var(--primary-color)">HUB</span></h1>
+    <div id="loginModal" class="modal-overlay active" style="display: flex;">
+        <div class="modal-container text-center">
+            <div class="mb-6 flex justify-center">
+                <div class="p-4 bg-blue-600/10 rounded-2xl border border-blue-500/20">
+                    <i data-lucide="shield-check" class="w-8 h-8 text-blue-500"></i>
+                </div>
             </div>
-            <div class="form-group">
-                <label>管理员密钥 Access Key</label>
-                <input type="password" id="adminKeyInput" placeholder="••••••••••••••••">
+            <h2 class="text-2xl font-display mb-2">身份验证</h2>
+            <p class="text-slate-400 mb-8 text-sm">请输入管理员密钥以访问控制台</p>
+            <div class="space-y-4">
+                <input type="password" id="adminKeyInput" class="glass-input w-full text-center tracking-[0.5em]"
+                    placeholder="••••••••">
+                <button id="loginBtn" class="btn-primary w-full">
+                    <span>登录系统</span>
+                    <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                </button>
+                <p id="loginError" class="text-rose-500 text-xs mt-2"></p>
             </div>
-            <button id="loginBtn" class="btn-primary" style="width: 100%; margin-top: 1rem;">
-                进入控制台 <span style="margin-left:8px">→</span>
-            </button>
-            <p id="loginError" class="error-msg text-center"></p>
         </div>
     </div>
 
-    <div class="app-container" id="appContainer">
-        <header class="top-bar">
-            <div class="logo">
-                <!-- Glowing Logo Text -->
-                <h1>WEATHER<span style="color:var(--primary-color)">HUB</span> <span
-                        style="font-size:0.8rem; opacity:0.6; font-weight:400; margin-left:8px; vertical-align: middle;">ADMIN
-                        CONSOLE</span></h1>
+    <!-- Main Content -->
+    <div class="hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" id="appContainer">
+        <!-- Header -->
+        <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-10">
+            <div>
+                <div class="flex items-center gap-3 mb-1">
+                    <div class="p-2 bg-blue-600/20 rounded-lg">
+                        <i data-lucide="cloud-sun" class="w-6 h-6 text-blue-400"></i>
+                    </div>
+                    <h1 class="text-2xl font-display">聚合天气控制台</h1>
+                </div>
+                <p class="text-slate-500 text-sm">实时监控与系统管理中心</p>
             </div>
-            <div class="user-actions">
-                <button id="logoutBtn" class="btn-outline">退出登录</button>
+            <div class="flex items-center gap-4">
+                <button id="logoutBtn" class="btn-outline text-rose-400 border-rose-900/30 hover:bg-rose-950/30">
+                    <i data-lucide="log-out" class="w-4 h-4"></i>
+                    <span>退出登录</span>
+                </button>
             </div>
         </header>
 
-        <!-- Global Stats Overview -->
-        <div class="dashboard-overview">
-            <div class="overview-card">
-                <div class="overview-label">TODAY CALLS</div>
-                <div class="overview-value" id="totalClientUsage">--</div>
+        <!-- Stats Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+            <div class="glass-card p-6">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="p-2 bg-blue-500/10 rounded-lg text-blue-400">
+                        <i data-lucide="activity" class="w-5 h-5"></i>
+                    </div>
+                    <span class="text-[10px] font-bold tracking-wider text-slate-500 uppercase">Today's Traffic</span>
+                </div>
+                <div class="text-3xl font-display mb-1" id="totalClientUsage">0</div>
+                <div class="text-xs text-slate-500">API 总请求次数</div>
             </div>
-            <div class="overview-divider"></div>
-            <div id="channelOverview" class="channel-overview-group">
-                <!-- Channel stats will be injected here -->
-            </div>
-        </div>
-
-        <nav class="main-nav">
-            <button class="nav-item active" data-tab="clients">客户端密钥 (CLIENTS)</button>
-            <button class="nav-item" data-tab="channels">渠道状态 (CHANNELS)</button>
-        </nav>
-
-        <!-- Client Keys Section -->
-        <div id="section-clients" class="tab-section">
-            <div class="section-header">
-                <h2>密钥管理 Key Management</h2>
-                <button class="btn-primary" onclick="openAddClientKey()">+ 新建密钥</button>
-            </div>
-            <div id="clientKeyList" class="card-grid">
-                <!-- Client keys will be rendered here -->
+            <div id="channelOverview" class="contents">
+                <!-- Channel stats injected here -->
             </div>
         </div>
 
-        <!-- Channel Config Section -->
-        <div id="section-channels" class="tab-section" style="display: none;">
-            <div class="section-header">
-                <h2>渠道管理 Channel Status</h2>
-            </div>
-            <div id="channelList" class="card-grid">
-                <!-- Channels will be rendered here -->
-            </div>
+        <!-- Navigation Tabs -->
+        <div class="flex gap-2 p-1 bg-slate-900/50 border border-slate-800 rounded-xl w-fit mb-8">
+            <button class="nav-item active" data-tab="clients">
+                <i data-lucide="key" class="w-4 h-4"></i>
+                <span>客户端密钥</span>
+            </button>
+            <button class="nav-item" data-tab="channels">
+                <i data-lucide="database" class="w-4 h-4"></i>
+                <span>数据同步渠道</span>
+            </button>
         </div>
+
+        <!-- Sections -->
+        <main>
+            <!-- Clients Section -->
+            <div id="section-clients" class="tab-section animate-in fade-in slide-in-from-bottom-2 duration-500">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl">密钥管理列表</h2>
+                    <button class="btn-primary" onclick="openAddClientKey()">
+                        <i data-lucide="plus" class="w-4 h-4"></i>
+                        <span>生成新密钥</span>
+                    </button>
+                </div>
+                <div id="clientKeyList" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Client keys will be rendered here -->
+                </div>
+            </div>
+
+            <!-- Channels Section -->
+            <div id="section-channels"
+                class="tab-section hidden animate-in fade-in slide-in-from-bottom-2 duration-500">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl">上游渠道配置</h2>
+                </div>
+                <div id="channelList" class="space-y-8">
+                    <!-- Channels will be rendered here -->
+                </div>
+            </div>
+        </main>
     </div>
 
-    <!-- Create Client Key Modal -->
-    <div id="createKeyModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>新建客户端密钥</h2>
-            <div class="form-group">
-                <label>名称/描述</label>
-                <input type="text" id="newKeyName" placeholder="例如: 我的移动应用">
-            </div>
-            <div class="modal-actions">
-                <button id="submitCreateKey" class="btn-primary">创建</button>
-            </div>
-        </div>
-    </div>
+    <!-- Modals Container -->
+    <div id="modalContainer" class="fixed inset-0 z-[101] pointer-events-none">
 
-    <!-- Add Channel Key Modal -->
-    <div id="addChannelKeyModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>添加渠道 API Key</h2>
-            <div class="form-group">
-                <label>API Key</label>
-                <input type="text" id="newChannelKey" placeholder="输入 API Key">
-                <p class="hint">对于百度/和风，格式通常为 ID|Key 或 AK|SK</p>
-            </div>
-            <div class="form-group">
-                <label>每日限额</label>
-                <input type="number" id="newChannelLimit" value="2000" placeholder="例如: 2000">
-            </div>
-            <div class="form-group">
-                <label>备注描述</label>
-                <input type="text" id="newChannelDesc" placeholder="例如: 备用 Key 1">
-            </div>
-            <div class="modal-actions">
-                <button id="submitAddChannelKey" class="btn-primary">添加</button>
+        <!-- Create Client Key Modal -->
+        <div id="createKeyModal" class="modal-overlay">
+            <div class="modal-container">
+                <div class="flex ml-auto justify-end">
+                    <button class="close p-2 text-slate-500 hover:text-white transition-colors">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+                <h2 class="text-2xl mb-2">生成新密钥</h2>
+                <p class="text-slate-400 text-sm mb-6">为新的应用程序或客户端分配访问凭据</p>
+                <div class="space-y-5">
+                    <div class="space-y-2">
+                        <label class="text-xs text-slate-500 uppercase font-bold tracking-wider">密钥备注/名称</label>
+                        <input type="text" id="newKeyName" class="glass-input w-full" placeholder="例如: 小程序前端 / iOS App">
+                    </div>
+                    <button id="submitCreateKey" class="btn-primary w-full">
+                        <i data-lucide="check" class="w-4 h-4"></i>
+                        <span>确认创建</span>
+                    </button>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- Edit Client Key Modal -->
-    <div id="editKeyModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>编辑密钥配置</h2>
-            <input type="hidden" id="editKeyId">
-            <div class="form-group">
-                <label>QPM 限制 (每分钟请求数, 0为不限)</label>
-                <input type="number" id="editKeyQpm" placeholder="例如: 60">
-            </div>
-            <div class="form-group">
-                <label>IP 白名单 (每行一个 IP)</label>
-                <textarea id="editKeyIpList" rows="4" placeholder="192.168.1.1&#10;10.0.0.1"></textarea>
-            </div>
-            <div class="form-group checkbox-group">
-                <input type="checkbox" id="editKeyIpEnabled">
-                <label for="editKeyIpEnabled">启用 IP 白名单</label>
-            </div>
-            <div class="modal-actions">
-                <button id="submitEditKey" class="btn-primary">保存修改</button>
+        <!-- Add Channel Key Modal -->
+        <div id="addChannelKeyModal" class="modal-overlay">
+            <div class="modal-container">
+                <div class="flex ml-auto justify-end">
+                    <button class="close p-2 text-slate-500 hover:text-white transition-colors">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+                <h2 class="text-2xl mb-6">添加渠道 API Key</h2>
+                <div class="space-y-5">
+                    <div class="space-y-2">
+                        <label class="text-xs text-slate-400">API Key / Token</label>
+                        <input type="text" id="newChannelKey" class="glass-input w-full font-mono text-sm"
+                            placeholder="输入 API 认证密钥">
+                        <p class="text-[10px] text-slate-500">注意: 某些渠道格式为 ID|Key</p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="space-y-2">
+                            <label class="text-xs text-slate-400">每日限额</label>
+                            <input type="number" id="newChannelLimit" class="glass-input w-full" value="2000">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-xs text-slate-400">备注</label>
+                            <input type="text" id="newChannelDesc" class="glass-input w-full" placeholder="主密钥">
+                        </div>
+                    </div>
+                    <button id="submitAddChannelKey" class="btn-primary w-full">保存配置</button>
+                </div>
             </div>
         </div>
+
+        <!-- Edit Client Key Modal -->
+        <div id="editKeyModal" class="modal-overlay">
+            <div class="modal-container max-w-lg">
+                <div class="flex ml-auto justify-end">
+                    <button class="close p-2 text-slate-500 hover:text-white transition-colors">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+                <h2 class="text-2xl mb-6">编辑密钥权限</h2>
+                <input type="hidden" id="editKeyId">
+                <div class="space-y-6">
+                    <div class="space-y-2">
+                        <label class="text-xs text-slate-400">QPM 速率限制 (0为不限制)</label>
+                        <div class="flex items-center gap-3">
+                            <input type="number" id="editKeyQpm" class="glass-input flex-1" placeholder="每分钟请求数">
+                            <span class="text-slate-500 text-sm">reqs/min</span>
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-xs text-slate-400">IP 白名单列表 (每行一个)</label>
+                        <textarea id="editKeyIpList" rows="4" class="glass-input w-full font-mono text-sm"
+                            placeholder="127.0.0.1"></textarea>
+                    </div>
+                    <div class="flex items-center gap-3 p-4 bg-slate-900/80 rounded-xl border border-slate-700">
+                        <input type="checkbox" id="editKeyIpEnabled"
+                            class="w-5 h-5 rounded border-slate-700 bg-slate-800 text-blue-600 focus:ring-blue-600 focus:ring-offset-0 ring-offset-slate-900">
+                        <label for="editKeyIpEnabled" class="text-sm font-medium">启用 IP 强制校验</label>
+                    </div>
+                    <button id="submitEditKey" class="btn-primary w-full">更新配置</button>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <script src="/static/js/admin.js?v=4"></script>
+    <script>
+        // Initialize Lucide icons after rendering
+        window.addEventListener('load', () => lucide.createIcons());
+    </script>
 </body>
 
 </html>
