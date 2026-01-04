@@ -152,8 +152,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const keyData = JSON.stringify(k).replace(/"/g, '&quot;');
 
             return `
-            return `
-                < div class="card" >
+            <div class="card">
                 <div class="card-header">
                     <div>
                         <div class="card-title">
@@ -186,8 +185,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <button class="btn-text" onclick="openEditClientKey('${keyData}')">EDIT</button>
                     <button class="btn-danger-text" onclick="deleteClientKey('${k.key}')">REVOKE</button>
                 </div>
-            </div >
-                `}).join('');
+            </div>
         `}).join('');
     }
 
