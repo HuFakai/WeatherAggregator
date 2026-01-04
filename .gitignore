@@ -92,3 +92,7 @@ coverage.xml
 tmp/
 temp/
 *.tmp
+
+# Agent & Shared
+.agent/workflows
+.shared/ui-ux-pro-max

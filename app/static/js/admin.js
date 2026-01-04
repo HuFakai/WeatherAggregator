@@ -7,6 +7,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const loginError = document.getElementById('loginError');
     const logoutBtn = document.getElementById('logoutBtn');
 
+    // Page Header
+    const pageTitle = document.getElementById('pageTitle');
+    const pageSubtitle = document.getElementById('pageSubtitle');
+    const currentTimeEl = document.getElementById('currentTime');
+
     // Tabs
     const navItems = document.querySelectorAll('.nav-item');
     const tabSections = document.querySelectorAll('.tab-section');
@@ -24,6 +29,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const newChannelKey = document.getElementById('newChannelKey');
     const newChannelLimit = document.getElementById('newChannelLimit');
     const newChannelDesc = document.getElementById('newChannelDesc');
+
+    // Initialize Dashboard Time
+    function updateTime() {
+        const now = new Date();
+        currentTimeEl.textContent = now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+    }
+    setInterval(updateTime, 1000);
+    updateTime();
 
     // --- Auth Logic ---
     function checkAuth() {
@@ -56,20 +69,26 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function showLogin() {
-        loginModal.classList.add('active');
         loginModal.style.display = 'flex';
-        appContainer.classList.add('hidden');
+        appContainer.style.display = 'none';
+        document.body.style.overflow = 'hidden';
     }
 
     function showApp() {
-        loginModal.classList.remove('active');
         loginModal.style.display = 'none';
-        appContainer.classList.remove('hidden');
+        appContainer.style.display = 'flex'; // Changed to flex for sidebar layout
+        document.body.style.overflow = 'auto';
+        lucide.createIcons();
     }
 
     loginBtn.addEventListener('click', async () => {
         const key = adminKeyInput.value.trim();
         if (!key) return;
+
+        // Show loading state
+        const originalBtnText = loginBtn.innerHTML;
+        loginBtn.innerHTML = '<i data-lucide="loader-2" class="spin"></i>登录中...';
+        lucide.createIcons();
 
         const isValid = await verifyKey(key);
         if (isValid) {
@@ -78,13 +97,17 @@ document.addEventListener('DOMContentLoaded', () => {
             loadData();
             loginError.textContent = '';
         } else {
-            loginError.textContent = '密钥无效，请重试';
+            loginError.textContent = '密钥验证失败，请检查后重试';
+            loginBtn.innerHTML = originalBtnText; // Reset button
+            lucide.createIcons();
         }
     });
 
     logoutBtn.addEventListener('click', () => {
-        localStorage.removeItem('adminKey');
-        location.reload();
+        if (confirm('确定要退出登录吗？')) {
+            localStorage.removeItem('adminKey');
+            location.reload();
+        }
     });
 
     // --- API Helper ---
@@ -98,14 +121,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const options = { method, headers };
         if (body) options.body = JSON.stringify(body);
 
-        const res = await fetch(url, options);
-        if (res.status === 403) {
-            alert('会话已过期，请重新登录');
-            localStorage.removeItem('adminKey');
-            location.reload();
+        try {
+            const res = await fetch(url, options);
+            if (res.status === 403) {
+                alert('会话已过期，请重新登录');
+                localStorage.removeItem('adminKey');
+                location.reload();
+                return null;
+            }
+            return res.json();
+        } catch (error) {
+            console.error('API Error:', error);
+            showToast('请求失败，请检查网络', 'error');
             return null;
         }
-        return res.json();
     }
 
     // --- Data Loading ---
@@ -117,26 +146,86 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Tabs Logic ---
     navItems.forEach(item => {
         item.addEventListener('click', () => {
+            if (item.id === 'logoutBtn') return;
+
             const tabId = item.getAttribute('data-tab');
+
+            // Update Nav
             navItems.forEach(nav => nav.classList.remove('active'));
             item.classList.add('active');
 
+            // Show Section
             tabSections.forEach(section => {
                 const shouldShow = section.id === `section-${tabId}`;
-                if (shouldShow) {
-                    section.classList.remove('hidden');
-                } else {
-                    section.classList.add('hidden');
-                }
+                section.style.display = shouldShow ? 'block' : 'none';
+                section.classList.toggle('active-section', shouldShow);
             });
+
+            // Update Header Title
+            if (tabId === 'clients') {
+                pageTitle.textContent = '客户端密钥';
+                pageSubtitle.textContent = '管理 API 访问权限与统计';
+            } else if (tabId === 'channels') {
+                pageTitle.textContent = '数据渠道管理';
+                pageSubtitle.textContent = '监控三方天气源状态与配额';
+            }
+
+            // Re-render icons for new content
+            lucide.createIcons();
         });
     });
+
+    // --- Toast Notification ---
+    function showToast(message, type = 'success') {
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        toast.style.cssText = `
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: ${type === 'success' ? 'var(--success)' : 'var(--danger)'};
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        `;
+
+        // Add icon based on type
+        const iconName = type === 'success' ? 'check-circle' : 'alert-circle';
+        toast.innerHTML = `<i data-lucide="${iconName}"></i> ${message}`;
+
+        document.body.appendChild(toast);
+        lucide.createIcons();
+
+        setTimeout(() => {
+            toast.style.animation = 'slideOut 0.3s ease forwards';
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+
+    // Add slide animations to document head
+    const styleSheet = document.createElement("style");
+    styleSheet.innerText = `
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
+        .spin { animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+    `;
+    document.head.appendChild(styleSheet);
+
 
     // --- Client Keys ---
     async function loadClientKeys() {
         const keys = await apiCall('/api/v1/admin/keys');
         if (!keys) return;
 
+        // Calculate Total Usage
         const totalToday = keys.reduce((sum, k) => {
             const todayVal = Object.values(k.stats)[0] || 0;
             return sum + todayVal;
@@ -148,55 +237,58 @@ document.addEventListener('DOMContentLoaded', () => {
             const todayUsage = Object.values(k.stats)[0] || 0;
 
             return `
-            <div class="glass-card p-6 flex flex-col group hover:border-blue-500/30 hover:bg-slate-900/80 transition-all duration-300">
-                <div class="flex justify-between items-start mb-6">
-                    <div class="space-y-1">
-                        <div class="text-lg font-medium text-white">${k.name}</div>
-                        <div class="flex items-center gap-2 text-xs text-slate-500">
-                            <span class="flex items-center gap-1"><i data-lucide="clock" class="w-3 h-3"></i> ${new Date(k.created_at).toLocaleDateString()}</span>
-                            ${k.qpm_limit > 0 ? `<span class="px-1.5 py-0.5 bg-amber-500/10 text-amber-500 rounded border border-amber-500/20 uppercase tracking-tighter">QPM ${k.qpm_limit}</span>` : ''}
-                            ${k.ip_whitelist_enabled ? `<span class="px-1.5 py-0.5 bg-emerald-500/10 text-emerald-500 rounded border border-emerald-500/20 uppercase tracking-tighter text-[9px]">IP LOCKED</span>` : ''}
+            <div class="glass-card key-card">
+                <div class="key-card-header">
+                    <div>
+                        <div class="key-title">${k.name}</div>
+                        <div class="key-meta">
+                            <span class="badge" style="background: rgba(255,255,255,0.1); color: var(--text-muted)">
+                                ${new Date(k.created_at).toLocaleDateString()}
+                            </span>
+                            ${k.qpm_limit > 0 ? `<span class="badge badge-warning">QPM:${k.qpm_limit}</span>` : ''}
+                            ${k.ip_whitelist_enabled ? `<span class="badge badge-success">IP限制</span>` : ''}
                         </div>
                     </div>
                 </div>
                 
-                <div class="bg-black/40 rounded-xl p-4 mb-6 font-mono text-sm text-blue-400 break-all border border-slate-800/50 flex items-center justify-between group-hover:border-blue-500/20">
-                    <span class="truncate">${k.key}</span>
-                </div>
+                <div class="key-display">${k.key}</div>
                 
-                <div class="grid grid-cols-2 gap-4 mb-6">
-                    <div class="bg-slate-950/50 rounded-xl p-3 border border-slate-800/50">
-                        <div class="text-[10px] uppercase tracking-widest text-slate-500 mb-1">今日消耗</div>
-                        <div class="text-xl font-display text-white">${todayUsage}</div>
+                <div class="stats-container">
+                    <div class="key-stats-row">
+                        <div class="stat-item">
+                            <div class="label">今日调用</div>
+                            <div class="value">${todayUsage}</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="label">7日总量</div>
+                            <div class="value">${k.total_usage_7d}</div>
+                        </div>
+                        <div class="card-actions-overlay">
+                            <button class="btn-icon-only" onclick="openEditClientKey('${keyData}')" title="编辑">
+                                <i data-lucide="settings-2"></i>
+                            </button>
+                            <button class="btn-icon-only danger" onclick="deleteClientKey('${k.key}')" title="删除">
+                                <i data-lucide="trash-2"></i>
+                            </button>
+                        </div>
                     </div>
-                    <div class="bg-slate-950/50 rounded-xl p-3 border border-slate-800/50">
-                        <div class="text-[10px] uppercase tracking-widest text-slate-500 mb-1">7日消耗</div>
-                        <div class="text-xl font-display text-white">${k.total_usage_7d}</div>
-                    </div>
-                </div>
-
-                <div class="mt-auto flex justify-end gap-3 pt-4 border-t border-slate-800/50">
-                    <button class="px-4 py-2 rounded-lg text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition-colors flex items-center gap-2" onclick="openEditClientKey('${keyData}')">
-                        <i data-lucide="settings" class="w-3.5 h-3.5"></i> 权限
-                    </button>
-                    <button class="px-4 py-2 rounded-lg text-xs font-medium text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 transition-colors flex items-center gap-2" onclick="deleteClientKey('${k.key}')">
-                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> 删除
-                    </button>
                 </div>
             </div>
         `}).join('');
+
         lucide.createIcons();
     }
 
     window.deleteClientKey = async (key) => {
         if (!confirm('确定要删除该密钥吗？此操作不可恢复。')) return;
         await apiCall(`/api/v1/admin/keys/${key}`, 'DELETE');
+        showToast('密钥已删除');
         loadClientKeys();
     };
 
     window.openAddClientKey = () => {
         newKeyName.value = '';
-        createKeyModal.classList.add('active');
+        createKeyModal.style.display = 'flex';
     };
 
     // Edit Logic
@@ -213,7 +305,7 @@ document.addEventListener('DOMContentLoaded', () => {
         editKeyQpm.value = k.qpm_limit || 0;
         editKeyIpList.value = (k.ip_whitelist || []).join('\n');
         editKeyIpEnabled.checked = k.ip_whitelist_enabled || false;
-        editKeyModal.classList.add('active');
+        editKeyModal.style.display = 'flex';
     };
 
     submitEditKey.onclick = async () => {
@@ -228,7 +320,8 @@ document.addEventListener('DOMContentLoaded', () => {
             ip_whitelist_enabled: ipEnabled
         });
 
-        editKeyModal.classList.remove('active');
+        editKeyModal.style.display = 'none';
+        showToast('配置已更新');
         loadClientKeys();
     };
 
@@ -237,8 +330,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!name) return alert('请输入名称');
 
         await apiCall('/api/v1/admin/keys', 'POST', { name });
-        createKeyModal.classList.remove('active');
+        createKeyModal.style.display = 'none';
         newKeyName.value = '';
+        showToast('密钥创建成功');
         loadClientKeys();
     };
 
@@ -249,6 +343,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const channels = await apiCall('/api/v1/admin/channels');
         if (!channels) return;
 
+        // Calculate Channel Stats
         const channelOverviewHTML = channels.map(c => {
             const keys = c.keys_pool || [];
             const keyCount = keys.length;
@@ -260,15 +355,14 @@ document.addEventListener('DOMContentLoaded', () => {
             }, 0);
 
             return `
-                <div class="glass-card p-6">
-                    <div class="flex justify-between items-start mb-4">
-                        <div class="p-2 bg-emerald-500/10 rounded-lg text-emerald-400">
-                            <i data-lucide="server" class="w-5 h-5"></i>
-                        </div>
-                        <span class="text-[10px] font-bold tracking-wider text-slate-500 uppercase">${c._id} API</span>
+                <div class="stat-card glass-card">
+                    <div class="stat-icon-bg" style="background: rgba(16, 185, 129, 0.1); color: var(--success)">
+                        <i data-lucide="${c._id === 'hefeng' ? 'cloud-rain' : 'sun'}"></i>
                     </div>
-                    <div class="text-3xl font-display mb-1">${channelTodayUsage.toLocaleString()}</div>
-                    <div class="text-xs text-slate-500">${keyCount} 个可用密钥</div>
+                    <div class="stat-content">
+                        <div class="stat-label">${c._id.toUpperCase()} (KEYS: ${keyCount})</div>
+                        <div class="stat-value">${channelTodayUsage.toLocaleString()}</div>
+                    </div>
                 </div>
             `;
         }).join('');
@@ -277,82 +371,78 @@ document.addEventListener('DOMContentLoaded', () => {
 
         channelList.innerHTML = channels.map(c => {
             const keys = c.keys_pool || [];
-            const activeKeys = keys.filter(k => k.status === 'active').length;
             const totalCalls = keys.reduce((sum, k) => sum + (k.total_3d || 0), 0);
 
             return `
-            <div class="glass-card overflow-hidden">
-                <div class="p-6 border-b border-slate-800 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                    <div class="space-y-1">
-                        <div class="flex items-center gap-3">
-                            <h3 class="text-xl font-display uppercase tracking-tight">${c._id}</h3>
-                            <span class="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 text-[10px] font-bold uppercase border border-blue-500/20">${activeKeys}/${keys.length} 密钥在线</span>
+            <div class="glass-card channel-card">
+                <div class="card-header" style="padding: 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                    <div class="card-title-group">
+                        <div class="card-title" style="display: flex; align-items: center; gap: 8px;">
+                            <span class="channel-status-dot ${c.is_active ? '' : 'inactive'}"></span>
+                            ${c._id.toUpperCase()}
                         </div>
-                        <p class="text-sm text-slate-500 italic">3日累计调度: ${totalCalls.toLocaleString()} 次有效请求</p>
+                        <div class="card-subtitle" style="color: var(--text-muted); font-size: 0.85rem;">3日总调用: ${totalCalls}</div>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <button class="btn-outline text-xs px-3 py-1.5" onclick="triggerChannelUpdate('${c._id}')">
-                            <i data-lucide="refresh-cw" class="w-3 h-3"></i> 同步数据
+                    <div class="card-actions" style="display: flex; gap: 10px;">
+                         <button class="btn-primary" style="padding: 6px 12px; font-size: 0.85rem;" onclick="triggerChannelUpdate('${c._id}')">
+                            <i data-lucide="refresh-cw" style="width: 14px;"></i> 一键更新
                         </button>
-                        <button class="btn-primary text-xs px-3 py-1.5" onclick="openAddChannelKey('${c._id}')">
-                            <i data-lucide="plus" class="w-3 h-3"></i> 添加 Key
+                        <button class="btn-primary" style="padding: 6px 12px; font-size: 0.85rem; background: transparent; border: 1px solid var(--border-color);" onclick="openAddChannelKey('${c._id}')">
+                            <i data-lucide="plus" style="width: 14px;"></i> 添加 Key
                         </button>
                     </div>
                 </div>
                 
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-sm">
-                        <thead class="bg-slate-900/40 text-slate-500 uppercase text-[10px] font-bold tracking-widest">
+                <div class="key-table-wrapper" style="padding: 0 1.5rem 1.5rem;">
+                    <table class="channel-key-table">
+                        <thead>
                             <tr>
-                                <th class="px-6 py-3 border-b border-slate-800">Key 凭证 / 备注</th>
-                                <th class="px-6 py-3 border-b border-slate-800 text-center">状态</th>
-                                <th class="px-6 py-3 border-b border-slate-800 text-center">限额</th>
-                                <th class="px-6 py-3 border-b border-slate-800">近3日流水</th>
-                                <th class="px-6 py-3 border-b border-slate-800">操作</th>
+                                <th>Key / 备注</th>
+                                <th>状态</th>
+                                <th>限额</th>
+                                <th>3日统计</th>
+                                <th>操作</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-slate-800">
+                        <tbody>
                             ${keys.map(k => {
-                const statsEntries = Object.entries(k.stats || {})
+                const statsStr = Object.entries(k.stats || {})
                     .sort((a, b) => b[0].localeCompare(a[0]))
-                    .slice(0, 3);
+                    .slice(0, 3)
+                    .map(([date, count]) => `
+                        <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 4px;">
+                            <span style="font-size: 0.8rem; color: var(--text-muted)">${date.slice(5)}</span>
+                            <span style="font-family: 'JetBrains Mono'; font-weight: 700; color: ${count > 0 ? 'var(--success)' : 'var(--text-muted)'}; font-size: 0.95rem;">${count}</span>
+                        </div>
+                    `)
+                    .join('');
 
                 return `
-                                <tr class="hover:bg-white/[0.02] transition-colors">
-                                    <td class="px-6 py-4">
-                                        <div class="font-mono text-xs text-slate-300 w-48 truncate" title="${k.key}">${k.key}</div>
-                                        <div class="text-[11px] text-slate-500 mt-0.5">${k.desc || '默认备注'}</div>
+                                <tr>
+                                    <td>
+                                        <div class="key-code" title="${k.key}" style="font-family: monospace; color: #e2e8f0;">${k.key.slice(0, 10)}...</div>
+                                        <div class="key-desc" style="font-size: 0.8rem; color: var(--text-muted);">${k.desc || '-'}</div>
                                     </td>
-                                    <td class="px-6 py-4 text-center">
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${k.status === 'active' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-500 border border-rose-500/20'}">
-                                            ${k.status.toUpperCase()}
-                                        </span>
+                                    <td>
+                                        <span class="badge ${k.status === 'active' ? 'badge-success' : 'badge-warning'}">${k.status}</span>
                                     </td>
-                                    <td class="px-6 py-4 text-center font-mono text-slate-400">${k.daily_limit}</td>
-                                    <td class="px-6 py-4">
-                                        <div class="flex gap-2">
-                                            ${statsEntries.map(([date, count]) => `
-                                                <div class="px-1.5 py-1 bg-slate-950 rounded flex flex-col items-center min-w-[40px] border border-slate-800">
-                                                    <span class="text-[8px] text-slate-600">${date.slice(5)}</span>
-                                                    <span class="text-[10px] font-bold ${count > 0 ? 'text-blue-400' : 'text-slate-500'}">${count}</span>
-                                                </div>
-                                            `).join('') || '<span class="text-slate-600 italic text-xs">无数据</span>'}
-                                        </div>
-                                    </td>
-                                    <td class="px-6 py-4 text-center">
-                                        <button class="p-2 text-slate-500 hover:text-rose-400 transition-colors" onclick="removeChannelKey('${c._id}', '${k.key}')">
-                                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                    <td>${k.daily_limit}</td>
+                                    <td>${statsStr || '-'}</td>
+                                    <td>
+                                        <button class="btn-icon-only danger" onclick="removeChannelKey('${c._id}', '${k.key}')" title="删除">
+                                            <i data-lucide="trash-2" style="width: 16px;"></i>
                                         </button>
                                     </td>
                                 </tr>
                                 `;
             }).join('')}
-                            ${keys.length === 0 ? '<tr><td colspan="5" class="px-6 py-10 text-center text-slate-600 italic">尚未配置 API 密钥池</td></tr>' : ''}
+                            ${keys.length === 0 ? '<tr><td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-muted)">暂无 Key 配置</td></tr>' : ''}
                         </tbody>
                     </table>
                 </div>
             </div>
         `}).join('');
+
         lucide.createIcons();
     }
 
@@ -361,20 +451,24 @@ document.addEventListener('DOMContentLoaded', () => {
         newChannelKey.value = '';
         newChannelLimit.value = '2000';
         newChannelDesc.value = '';
-        addChannelKeyModal.classList.add('active');
+        addChannelKeyModal.style.display = 'flex';
     };
 
     window.removeChannelKey = async (channel, key) => {
         if (!confirm('确定要移除该 Key 吗？')) return;
         await apiCall(`/api/v1/admin/channels/${channel}/keys`, 'DELETE', { key });
+        showToast('Key 已移除');
         loadChannels();
     };
 
     window.triggerChannelUpdate = async (channel) => {
         if (!confirm(`确定要立即触发 [${channel}] 的全量更新吗？\n这将在后台启动异步任务。`)) return;
+
         const res = await apiCall(`/api/v1/admin/channels/${channel}/update`, 'POST');
         if (res && res.status === 'triggered') {
-            alert(`更新任务已触发！\n${res.message}`);
+            showToast('更新任务已触发');
+        } else {
+            showToast('触发失败，请查看日志', 'error');
         }
     };
 
@@ -382,29 +476,34 @@ document.addEventListener('DOMContentLoaded', () => {
         const key = newChannelKey.value.trim();
         const limit = parseInt(newChannelLimit.value);
         const desc = newChannelDesc.value.trim();
+
         if (!key) return alert('请输入 Key');
 
         await apiCall(`/api/v1/admin/channels/${currentChannel}/keys`, 'POST', {
-            key, daily_limit: limit, desc
+            key,
+            daily_limit: limit,
+            desc
         });
-        addChannelKeyModal.classList.remove('active');
+        addChannelKeyModal.style.display = 'none';
+        showToast('渠道 Key 添加成功');
         loadChannels();
     };
 
     // --- Common Modal Logic ---
-    document.querySelectorAll('.close').forEach(span => {
-        span.onclick = function () {
-            this.closest('.modal-overlay').classList.remove('active');
+    // Handle close button click
+    document.querySelectorAll('.close-btn').forEach(btn => {
+        btn.onclick = function () {
+            const modal = this.closest('.modal');
+            modal.style.display = 'none';
         }
     });
 
     window.onclick = (event) => {
-        if (event.target.classList.contains('modal-overlay') && event.target.id !== 'loginModal') {
-            event.target.classList.remove('active');
+        if (event.target.classList.contains('modal') && event.target.id !== 'loginModal') {
+            event.target.style.display = 'none';
         }
     };
 
     // Init
     checkAuth();
 });
-
