@@ -4,10 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>聚合天气管理</title>
-    <link rel="stylesheet" href="/static/css/admin.css?v=4">
+    <title>聚合天气管理系统</title>
+    <!-- Use v5 for cache busting -->
+    <link rel="stylesheet" href="/static/css/admin.css?v=5">
     <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
         rel="stylesheet">
 </head>
 
@@ -15,30 +16,37 @@
     <!-- Login Modal -->
     <div id="loginModal" class="modal" style="display: flex;">
         <div class="modal-content login-content">
-            <h2>管理员密钥</h2>
-            <p>请输入管理员密钥以继续</p>
-            <div class="form-group">
-                <input type="password" id="adminKeyInput" placeholder="Admin Key">
+            <div class="logo text-center" style="margin-bottom: 2rem;">
+                <h1>WEATHER<span style="color:var(--primary-color)">HUB</span></h1>
             </div>
-            <button id="loginBtn" class="btn-primary" style="width: 100%">登录</button>
-            <p id="loginError" class="error-msg"></p>
+            <div class="form-group">
+                <label>管理员密钥 Access Key</label>
+                <input type="password" id="adminKeyInput" placeholder="••••••••••••••••">
+            </div>
+            <button id="loginBtn" class="btn-primary" style="width: 100%; margin-top: 1rem;">
+                进入控制台 <span style="margin-left:8px">→</span>
+            </button>
+            <p id="loginError" class="error-msg text-center"></p>
         </div>
     </div>
 
     <div class="app-container" id="appContainer">
         <header class="top-bar">
             <div class="logo">
-                <h1>聚合天气管理</h1>
+                <!-- Glowing Logo Text -->
+                <h1>WEATHER<span style="color:var(--primary-color)">HUB</span> <span
+                        style="font-size:0.8rem; opacity:0.6; font-weight:400; margin-left:8px; vertical-align: middle;">ADMIN
+                        CONSOLE</span></h1>
             </div>
             <div class="user-actions">
-                <button id="logoutBtn" class="btn-text">退出</button>
+                <button id="logoutBtn" class="btn-outline">退出登录</button>
             </div>
         </header>
 
         <!-- Global Stats Overview -->
         <div class="dashboard-overview">
             <div class="overview-card">
-                <div class="overview-label">调用次数统计 (TODAY)</div>
+                <div class="overview-label">TODAY CALLS</div>
                 <div class="overview-value" id="totalClientUsage">--</div>
             </div>
             <div class="overview-divider"></div>
@@ -48,14 +56,14 @@
         </div>
 
         <nav class="main-nav">
-            <button class="nav-item active" data-tab="clients">客户端密钥</button>
-            <button class="nav-item" data-tab="channels">渠道状态</button>
+            <button class="nav-item active" data-tab="clients">客户端密钥 (CLIENTS)</button>
+            <button class="nav-item" data-tab="channels">渠道状态 (CHANNELS)</button>
         </nav>
 
         <!-- Client Keys Section -->
         <div id="section-clients" class="tab-section">
             <div class="section-header">
-                <h2>密钥管理</h2>
+                <h2>密钥管理 Key Management</h2>
                 <button class="btn-primary" onclick="openAddClientKey()">+ 新建密钥</button>
             </div>
             <div id="clientKeyList" class="card-grid">
@@ -66,7 +74,7 @@
         <!-- Channel Config Section -->
         <div id="section-channels" class="tab-section" style="display: none;">
             <div class="section-header">
-                <h2>渠道管理</h2>
+                <h2>渠道管理 Channel Status</h2>
             </div>
             <div id="channelList" class="card-grid">
                 <!-- Channels will be rendered here -->
@@ -137,7 +145,7 @@
         </div>
     </div>
 
-    <script src="/static/js/admin.js?v=3"></script>
+    <script src="/static/js/admin.js?v=4"></script>
 </body>
 
 </html>

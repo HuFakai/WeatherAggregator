@@ -152,19 +152,23 @@ document.addEventListener('DOMContentLoaded', () => {
             const keyData = JSON.stringify(k).replace(/"/g, '&quot;');
 
             return `
-            <div class="card">
+            return `
+                < div class="card" >
                 <div class="card-header">
                     <div>
-                        <div class="card-title">${k.name}</div>
+                        <div class="card-title">
+                            <span style="width:6px; height:6px; background:var(--accent-color); border-radius:50%; display:inline-block;"></span>
+                            ${k.name}
+                        </div>
                         <div class="card-subtitle">
-                            Created: ${new Date(k.created_at).toLocaleDateString()}
-                            ${k.qpm_limit > 0 ? `<span class="badge badge-warning">QPM: ${k.qpm_limit}</span>` : ''}
-                            ${k.ip_whitelist_enabled ? `<span class="badge badge-success">IP限制</span>` : ''}
+                            CREATED: ${new Date(k.created_at).toLocaleDateString()}
+                            ${k.qpm_limit > 0 ? `<span class="badge badge-warning" style="margin-left:6px">QPM: ${k.qpm_limit}</span>` : ''}
+                            ${k.ip_whitelist_enabled ? `<span class="badge badge-success" style="margin-left:4px">IP: ON</span>` : ''}
                         </div>
                     </div>
                 </div>
                 
-                <div class="client-key-display">${k.key}</div>
+                <div class="client-key-display" title="Click to copy" onclick="navigator.clipboard.writeText('${k.key}')">${k.key}</div>
                 
                 <div class="stats-container">
                     <div class="stat-box">
@@ -178,11 +182,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 </div>
 
-                <div class="delete-btn-wrapper" style="display: flex; gap: 1rem; justify-content: flex-end;">
+                <div class="delete-btn-wrapper" style="display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1rem; border-top: 1px solid var(--card-border); padding-top: 1rem;">
                     <button class="btn-text" onclick="openEditClientKey('${keyData}')">EDIT</button>
-                    <button class="btn-danger-text" onclick="deleteClientKey('${k.key}')">DELETE</button>
+                    <button class="btn-danger-text" onclick="deleteClientKey('${k.key}')">REVOKE</button>
                 </div>
-            </div>
+            </div >
+                `}).join('');
         `}).join('');
     }
 
