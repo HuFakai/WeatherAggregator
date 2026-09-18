@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>天气聚合系统 (WeatherAggregator) UI 重构方案展示中心</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --bg-dark: #07090e;
+            --bg-card: #0f141e;
+            --bg-card-hover: #161e2e;
+            --border: #1e2638;
+            --border-hover: #2e3a55;
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+            --text-faint: #64748b;
+            --accent-blue: #38bdf8;
+            --accent-purple: #a855f7;
+            --accent-emerald: #10b981;
+            --accent-amber: #f59e0b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-image: 
+                radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.12), transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(168, 85, 247, 0.08), transparent 50%);
+        }
+
+        .container {
+            max-width: 1380px;
+            margin: 0 auto;
+            padding: 40px 24px 80px;
+            width: 100%;
+        }
+
+        /* Hero Header */
+        .hero {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+        .hero-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 999px;
+            background: rgba(56, 189, 248, 0.1);
+            border: 1px solid rgba(56, 189, 248, 0.25);
+            color: var(--accent-blue);
+            font-size: 12px;
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+            margin-bottom: 16px;
+        }
+        .hero-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 38px;
+            font-weight: 700;
+            letter-spacing: -1px;
+            background: linear-gradient(135deg, #ffffff 40%, #94a3b8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 12px;
+        }
+        .hero-desc {
+            color: var(--text-sub);
+            font-size: 16px;
+            max-width: 720px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        /* 3 Schemes Cards Grid */
+        .schemes-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            margin-bottom: 48px;
+        }
+
+        .scheme-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 28px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .scheme-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--border-hover);
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.7);
+        }
+        .card-glow-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+        }
+        .glow-a { background: linear-gradient(90deg, #0284c7, #38bdf8); }
+        .glow-b { background: linear-gradient(90deg, #2563eb, #60a5fa); }
+        .glow-c { background: linear-gradient(90deg, #10b981, #38bdf8); }
+
+        .scheme-badge {
+            display: inline-block;
+            font-size: 11px;
+            font-family: 'JetBrains Mono', monospace;
+            padding: 3px 8px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.06);
+            color: var(--text-sub);
+            margin-bottom: 14px;
+        }
+        .scheme-name {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 22px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+        .scheme-intro {
+            font-size: 13px;
+            color: var(--text-sub);
+            line-height: 1.6;
+            margin-bottom: 20px;
+            min-height: 60px;
+        }
+
+        /* Feature Bullet Points */
+        .feature-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 24px;
+            font-size: 12px;
+            color: var(--text-sub);
+        }
+        .feature-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+        }
+        .feature-list li i {
+            color: var(--accent-blue);
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        /* Action Buttons */
+        .btn-launch {
+            background: #1e293b;
+            color: #fff;
+            border: 1px solid var(--border);
+            padding: 10px 16px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 13px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .btn-launch:hover {
+            background: var(--accent-blue);
+            color: #050a12;
+            border-color: var(--accent-blue);
+        }
+        .btn-preview-in-page {
+            background: transparent;
+            color: var(--text-sub);
+            border: 1px solid transparent;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            text-align: center;
+            cursor: pointer;
+            margin-top: 6px;
+            transition: color 0.15s;
+        }
+        .btn-preview-in-page:hover {
+            color: #fff;
+        }
+
+        /* Live Preview Stage Iframe */
+        .live-preview-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.8);
+        }
+        .preview-header-bar {
+            background: #0b0f17;
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .mac-dots {
+            display: flex;
+            gap: 6px;
+        }
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+        .dot-red { background: #ef4444; }
+        .dot-yellow { background: #f59e0b; }
+        .dot-green { background: #10b981; }
+
+        .preview-tab-pills {
+            display: flex;
+            gap: 6px;
+        }
+        .tab-pill {
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            color: var(--text-sub);
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.15s;
+        }
+        .tab-pill.active {
+            background: var(--bg-card);
+            color: #fff;
+            border-color: var(--border);
+            font-weight: 500;
+        }
+        .tab-pill:hover {
+            color: #fff;
+        }
+
+        .preview-iframe {
+            width: 100%;
+            height: 720px;
+            border: none;
+            display: block;
+            background: #000;
+        }
+
+        @media (max-width: 1024px) {
+            .schemes-grid { grid-template-columns: 1fr; }
+            .preview-iframe { height: 500px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Hero Header -->
+        <header class="hero">
+            <div class="hero-tag">
+                <i data-lucide="sparkles" style="width: 14px; height: 14px;"></i>
+                <span>UI/UX PRO MAX · REDESIGN SUITE</span>
+            </div>
+            <h1 class="hero-title">聚合天气服务平台 UI 重构预览套件</h1>
+            <p class="hero-desc">
+                不拘泥于原有的单一管理卡片，按照多源异构气象聚合、实时偏差分析、动态定时调度与网关风控的业务真谛，提供 3 套完全不同风格与交互范式的独立原型。
+            </p>
+        </header>
+
+        <!-- 3 Schemes Grid -->
+        <div class="schemes-grid">
+
+            <!-- Scheme A -->
+            <div class="scheme-card">
+                <div class="card-glow-bar glow-a"></div>
+                <div>
+                    <span class="scheme-badge">SCHEME A · CYBER BENTO</span>
+                    <h2 class="scheme-name">AtmoSphere Bento</h2>
+                    <p class="scheme-intro">
+                        深空暗黑 OLED 背景与流体 Bento Grid 栅格体系。搭载多源温度重叠曲线 Canvas 图表、渠道健康水位与发光微质感。
+                    </p>
+                    <ul class="feature-list">
+                        <li><i data-lucide="check-circle-2" style="width: 14px; height: 14px;"></i> 实时多渠道（和风/百度/易客）7天温差走势交叉对比折线</li>
+                        <li><i data-lucide="check-circle-2" style="width: 14px; height: 14px;"></i> 渠道 Key 池水位环形进度与熔断报警提示</li>
+                        <li><i data-lucide="check-circle-2" style="width: 14px; height: 14px;"></i> Celery Beat 动态 Cron 时间轴与防风控抖动滑块</li>
+                        <li><i data-lucide="check-circle-2" style="width: 14px; height: 14px;"></i> 适合极客运维大屏与监控控制台</li>
+                    </ul>
+                </div>
+                <div>
+                    <a href="concept_a_bento.html" target="_blank" class="btn-launch">
+                        <span>独立全屏体验方案 A</span>
+                        <i data-lucide="external-link" style="width: 14px; height: 14px;"></i>
+                    </a>
+                    <button class="btn-preview-in-page" style="width: 100%;" onclick="loadIframe('concept_a_bento.html', 0)">
+                        在下方内嵌视窗中直接预览
+                    </button>
+                </div>
+            </div>
+
+            <!-- Scheme B (Recommended & Complete) -->
+            <div class="scheme-card" style="border-color: rgba(59, 130, 246, 0.5); box-shadow: 0 0 30px rgba(59, 130, 246, 0.15);">
+                <div class="card-glow-bar glow-b"></div>
+                <div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                        <span class="scheme-badge" style="background: rgba(59, 130, 246, 0.15); color: var(--accent-blue); border: 1px solid rgba(59, 130, 246, 0.3);">
+                            ★ 已选定方案 · 全功能生产融合版
+                        </span>
+                        <span style="font-size: 11px; font-family: 'JetBrains Mono'; color: var(--accent-emerald);">功能闭环就绪</span>
+                    </div>
+                    <h2 class="scheme-name">Aetherial Studio (融合版)</h2>
+                    <p class="scheme-intro">
+                        以 Linear / Vercel 极简现代 SaaS 为底座，深度融入方案 A 的气象监控大屏能力（Canvas 多源温度走势重叠曲线、渠道与客户端水位监控、全局 Cmd+K、独立渠道定时调度与 API 测试沙盒）。
+                    </p>
+                    <ul class="feature-list">
+                        <li><i data-lucide="check-circle-2" style="width: 14px; height: 14px; color: var(--accent-blue);"></i> <strong>监控大屏概览</strong>：左侧客户端限流（显眼今日调用量/居中弹窗编辑）与右侧渠道水位调换排版</li>
+                        <li><i data-lucide="check-circle-2" style="width: 14px; height: 14px; color: var(--accent-blue);"></i> <strong>数据渠道与 Key 池</strong>：保留近 3 日调用量统计明细，支持各 API Key 独立启用/禁用 Switch 开关</li>
+                        <li><i data-lucide="check-circle-2" style="width: 14px; height: 14px; color: var(--accent-blue);"></i> <strong>客户端 API Key 管控</strong>：独立 KPI 卡片呈现今日总调用与 7 日累计总量，密钥列表字段清晰拆分</li>
+                        <li><i data-lucide="check-circle-2" style="width: 14px; height: 14px; color: var(--accent-blue);"></i> <strong>渠道独立 Celery 调度</strong>：每个渠道独立卡片，支持配置多个定时规则（逗号分隔），防风控随机延时</li>
+                        <li><i data-lucide="check-circle-2" style="width: 14px; height: 14px; color: var(--accent-blue);"></i> <strong>API 交互测试沙盒</strong>：X-API-Key 下拉直选已有密钥，快速预设城市支持拼音/中文实时搜索过滤</li>
+                    </ul>
+                </div>
+                <div>
+                    <a href="complete_aetherial_ui.html" target="_blank" class="btn-launch" style="background: var(--accent-blue); color: #fff; border-color: transparent; margin-bottom: 8px;">
+                        <span>立即全屏打开 Aetherial 全功能融合版</span>
+                        <i data-lucide="external-link" style="width: 14px; height: 14px;"></i>
+                    </a>
+                    <button class="btn-preview-in-page" style="width: 100%;" onclick="loadIframe('complete_aetherial_ui.html', 0)">
+                        在下方内嵌视窗中直接预览
+                    </button>
+                </div>
+            </div>
+
+            <!-- Scheme C -->
+            <div class="scheme-card">
+                <div class="card-glow-bar glow-c"></div>
+                <div>
+                    <span class="scheme-badge">SCHEME C · CLARITY HYBRID</span>
+                    <h2 class="scheme-name">Nordic Clarity</h2>
+                    <p class="scheme-intro">
+                        北欧纯净极简风与明暗双生自适应设计。支持极致丝滑的浅色 (Light) 与深色 (Dark) 一键切换，通透漫反射微阴影。
+                    </p>
+                    <ul class="feature-list">
+                        <li><i data-lucide="check-circle-2" style="width: 14px; height: 14px;"></i> 晨雾白/午夜黑一键秒切，图表与所有卡片全自适应</li>
+                        <li><i data-lucide="check-circle-2" style="width: 14px; height: 14px;"></i> 沉浸式气象氛围卡片：直观聚合各源温度、AQI 与风力</li>
+                        <li><i data-lucide="check-circle-2" style="width: 14px; height: 14px;"></i> 渠道健康水位胶囊条与 Celery 定时任务预设芯片</li>
+                        <li><i data-lucide="check-circle-2" style="width: 14px; height: 14px;"></i> 移动端自适应极佳，人体工学高可读性</li>
+                    </ul>
+                </div>
+                <div>
+                    <a href="concept_c_clarity.html" target="_blank" class="btn-launch">
+                        <span>独立全屏体验方案 C</span>
+                        <i data-lucide="external-link" style="width: 14px; height: 14px;"></i>
+                    </a>
+                    <button class="btn-preview-in-page" style="width: 100%;" onclick="loadIframe('concept_c_clarity.html', 2)">
+                        在下方内嵌视窗中直接预览
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- In-page Live Preview Container -->
+        <div class="live-preview-box">
+            <div class="preview-header-bar">
+                <div class="mac-dots">
+                    <div class="dot dot-red"></div>
+                    <div class="dot dot-yellow"></div>
+                    <div class="dot dot-green"></div>
+                </div>
+
+                <div class="preview-tab-pills">
+                    <button class="tab-pill active" onclick="loadIframe('complete_aetherial_ui.html', 0)">★ Aetherial Studio 全功能融合版</button>
+                    <button class="tab-pill" onclick="loadIframe('concept_a_bento.html', 1)">方案 A (Bento 监控大屏)</button>
+                    <button class="tab-pill" onclick="loadIframe('concept_c_clarity.html', 2)">方案 C (北欧明暗中枢)</button>
+                </div>
+
+                <div style="font-size: 11px; font-family: 'JetBrains Mono', monospace; color: var(--accent-blue);" id="previewUrlLabel">
+                    preview_ui/complete_aetherial_ui.html
+                </div>
+            </div>
+
+            <iframe src="complete_aetherial_ui.html" class="preview-iframe" id="liveFrame"></iframe>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        function loadIframe(url, tabIndex) {
+            const frame = document.getElementById('liveFrame');
+            frame.src = url;
+
+            const pills = document.querySelectorAll('.tab-pill');
+            pills.forEach((p, idx) => {
+                if (idx === tabIndex) p.classList.add('active');
+                else p.classList.remove('active');
+            });
+
+            document.getElementById('previewUrlLabel').textContent = `preview_ui/${url}`;
+
+            // Smooth scroll to preview area
+            document.querySelector('.live-preview-box').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    </script>
+</body>
+</html>

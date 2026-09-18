@@ -36,7 +36,13 @@ def load_schedule_from_db():
             cron_str = config.get("cron")
             if not cron_str:
                 continue
-            cron_list = cron_str if isinstance(cron_str, list) else [cron_str]
+            if isinstance(cron_str, str):
+                import re
+                cron_list = [s.strip() for s in re.split(r'[,\n]+', cron_str) if s.strip()]
+            elif isinstance(cron_str, list):
+                cron_list = [s.strip() for s in cron_str if isinstance(s, str) and s.strip()]
+            else:
+                continue
             for idx, expr in enumerate(cron_list):
                 try:
                     ct = parse_cron_expr(expr)

@@ -13,6 +13,11 @@ if not os.path.exists(static_dir):
     os.makedirs(static_dir)
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
+# Mount Preview UI
+preview_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "preview_ui")
+if os.path.exists(preview_dir):
+    app.mount("/preview", StaticFiles(directory=preview_dir, html=True), name="preview")
+
 # Templates
 templates_dir = os.path.join(os.path.dirname(__file__), "templates")
 if not os.path.exists(templates_dir):
@@ -30,3 +35,4 @@ def read_root():
 @app.get("/admin", response_class=HTMLResponse)
 async def admin_page(request: Request):
     return templates.TemplateResponse("admin.html", {"request": request})
+

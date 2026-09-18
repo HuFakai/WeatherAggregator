@@ -1,0 +1,1491 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>方案 B: Aetherial Studio - 极简工程级气象工坊与 SaaS 控制台</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --bg-body: #0b0c0e;
+            --bg-sidebar: #0f1115;
+            --bg-panel: #13161c;
+            --bg-hover: #1b1e26;
+            --bg-subtle: #16181f;
+            --border-color: #222631;
+            --border-hover: #333948;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent-blue: #3b82f6;
+            --accent-blue-hover: #2563eb;
+            --accent-cyan: #06b6d4;
+            --accent-emerald: #10b981;
+            --accent-amber: #f59e0b;
+            --accent-rose: #f43f5e;
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+            --radius-md: 8px;
+            --radius-sm: 6px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-primary);
+            font-family: var(--font-sans);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            font-size: 13px;
+            letter-spacing: -0.01em;
+        }
+
+        /* Top Navigator Bar */
+        .preview-banner {
+            background: #090a0d;
+            border-bottom: 1px solid var(--border-color);
+            padding: 7px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12px;
+            z-index: 50;
+        }
+        .preview-banner a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: color 0.15s;
+        }
+        .preview-banner a:hover {
+            color: var(--text-primary);
+        }
+        .scheme-switcher {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .scheme-tag {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.15s;
+        }
+        .scheme-tag.active {
+            background: var(--text-primary);
+            color: #0b0c0e;
+            font-weight: 600;
+        }
+        .scheme-tag.inactive {
+            background: var(--bg-panel);
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+        }
+        .scheme-tag.inactive:hover {
+            color: var(--text-primary);
+            border-color: var(--border-hover);
+        }
+
+        /* App Wrapper */
+        .app-layout {
+            display: flex;
+            flex: 1;
+            height: calc(100vh - 35px);
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 240px;
+            background: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            user-select: none;
+        }
+        .sidebar-top {
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .brand-workspace {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 4px;
+        }
+        .brand-logo {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            background: #2563eb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            box-shadow: 0 0 12px rgba(37, 99, 235, 0.4);
+        }
+        .brand-text {
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--text-primary);
+        }
+        .brand-sub {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        /* Quick Cmd Button */
+        .cmd-bar-trigger {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 7px 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: var(--text-muted);
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .cmd-bar-trigger:hover {
+            border-color: var(--border-hover);
+            color: var(--text-primary);
+            background: var(--bg-hover);
+        }
+        .kbd-key {
+            background: var(--bg-subtle);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 1px 5px;
+            font-size: 10px;
+            font-family: var(--font-mono);
+            color: var(--text-secondary);
+        }
+
+        /* Nav List */
+        .nav-group {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .nav-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            padding: 8px 10px 4px;
+            font-weight: 600;
+        }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 7px 10px;
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.12s;
+            font-weight: 500;
+        }
+        .nav-item:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+        .nav-item.active {
+            background: #1e293b;
+            color: #fff;
+            font-weight: 600;
+        }
+        .nav-item.active svg {
+            color: var(--accent-blue);
+        }
+        .badge-count {
+            margin-left: auto;
+            font-size: 11px;
+            font-family: var(--font-mono);
+            color: var(--text-muted);
+            background: var(--bg-panel);
+            padding: 1px 6px;
+            border-radius: 999px;
+            border: 1px solid var(--border-color);
+        }
+
+        .sidebar-bottom {
+            padding: 16px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12px;
+        }
+        .online-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--accent-emerald);
+        }
+        .status-light {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent-emerald);
+        }
+
+        /* Main Workbench Area */
+        .main-stage {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-body);
+            overflow: hidden;
+        }
+
+        /* Stage Header */
+        .stage-header {
+            height: 52px;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--bg-sidebar);
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .stage-title {
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .stage-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Buttons */
+        .btn-zinc {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 6px 12px;
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .btn-zinc:hover {
+            background: var(--bg-hover);
+            border-color: var(--border-hover);
+        }
+        .btn-primary {
+            background: var(--accent-blue);
+            border: 1px solid transparent;
+            color: #fff;
+            padding: 6px 14px;
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .btn-primary:hover {
+            background: var(--accent-blue-hover);
+        }
+
+        /* Tab Content Panels */
+        .tab-view {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            display: none;
+        }
+        .tab-view.active {
+            display: block;
+        }
+
+        /* TAB 1: Overview Styles */
+        .kpi-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .kpi-box {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 16px;
+        }
+        .kpi-title {
+            color: var(--text-muted);
+            font-size: 12px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .kpi-num {
+            font-size: 24px;
+            font-weight: 600;
+            font-family: var(--font-mono);
+            letter-spacing: -0.5px;
+        }
+        .kpi-sub {
+            font-size: 11px;
+            color: var(--accent-emerald);
+            margin-top: 4px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* Channel Topology Diagram */
+        .topology-panel {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+        .panel-heading {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .pipe-diagram {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr auto 1fr;
+            gap: 12px;
+            align-items: center;
+            padding: 16px 8px;
+        }
+        .pipe-card {
+            background: var(--bg-subtle);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 14px;
+        }
+        .pipe-arrow {
+            color: var(--text-muted);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            font-size: 11px;
+            font-family: var(--font-mono);
+        }
+
+        /* TAB 2: Multi-Source Weather Insights (Split Workspace) */
+        .split-workspace {
+            display: grid;
+            grid-template-columns: 260px 1fr;
+            gap: 20px;
+            height: 100%;
+        }
+        .city-directory {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .directory-search {
+            padding: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .search-input-wrap {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .search-input-wrap input {
+            width: 100%;
+            background: var(--bg-subtle);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 6px 10px 6px 28px;
+            color: var(--text-primary);
+            font-size: 12px;
+            outline: none;
+        }
+        .search-icon-sm {
+            position: absolute;
+            left: 8px;
+            color: var(--text-muted);
+        }
+        .directory-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .city-item-btn {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 10px;
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            font-family: inherit;
+            width: 100%;
+            text-align: left;
+            transition: all 0.12s;
+        }
+        .city-item-btn:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+        .city-item-btn.active {
+            background: var(--bg-hover);
+            color: #fff;
+            border: 1px solid var(--border-hover);
+        }
+        .city-name-tag {
+            font-weight: 500;
+        }
+        .city-code-tag {
+            font-size: 11px;
+            font-family: var(--font-mono);
+            color: var(--text-muted);
+        }
+
+        /* Detailed Matrix Table */
+        .matrix-table-wrap {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .matrix-table-header {
+            padding: 14px 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+        .data-table th {
+            text-align: left;
+            padding: 10px 16px;
+            background: var(--bg-subtle);
+            color: var(--text-muted);
+            font-weight: 500;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .data-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+        .data-table tr:hover td {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+        .delta-warning {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--accent-amber);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+        .channel-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        /* TAB 3: Key Engine Drawer */
+        .keys-table-card {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+        }
+
+        /* Drawer Overlay */
+        .drawer-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            display: none;
+            justify-content: flex-end;
+            z-index: 200;
+        }
+        .drawer-sheet {
+            width: 440px;
+            background: var(--bg-sidebar);
+            border-left: 1px solid var(--border-color);
+            height: 100%;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
+            animation: slideIn 0.2s ease-out;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+        }
+
+        /* TAB 5: API Playground */
+        .playground-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            height: 100%;
+        }
+        .request-card, .response-card {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+        }
+        .form-row {
+            margin-bottom: 14px;
+        }
+        .form-row label {
+            display: block;
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+        .form-control {
+            width: 100%;
+            background: var(--bg-subtle);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 8px 12px;
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            font-family: inherit;
+            outline: none;
+        }
+        .form-control:focus {
+            border-color: var(--accent-blue);
+        }
+        .json-viewer {
+            flex: 1;
+            background: #090b0e;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 12px;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: #7dd3fc;
+            overflow: auto;
+            white-space: pre-wrap;
+            line-height: 1.6;
+        }
+
+        /* Command Palette Modal (Cmd+K) */
+        .cmd-modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(6px);
+            display: none;
+            align-items: flex-start;
+            justify-content: center;
+            padding-top: 120px;
+            z-index: 300;
+        }
+        .cmd-dialog {
+            width: 540px;
+            background: var(--bg-sidebar);
+            border: 1px solid var(--border-hover);
+            border-radius: var(--radius-md);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8);
+            overflow: hidden;
+        }
+        .cmd-input-wrap {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .cmd-input-wrap input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #fff;
+            font-size: 14px;
+            font-family: inherit;
+        }
+        .cmd-list {
+            padding: 8px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .cmd-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.12s;
+        }
+        .cmd-item:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+        .cmd-tag {
+            font-size: 11px;
+            font-family: var(--font-mono);
+            color: var(--text-muted);
+        }
+
+        /* Notification Toast */
+        .toast-banner {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #1e293b;
+            border: 1px solid var(--border-hover);
+            border-left: 3px solid var(--accent-blue);
+            color: #fff;
+            padding: 10px 16px;
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+            transform: translateY(80px);
+            opacity: 0;
+            transition: all 0.25s ease;
+            z-index: 500;
+        }
+        .toast-banner.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Top Preview Hub Navigator -->
+    <div class="preview-banner">
+        <a href="index.html">
+            <i data-lucide="layout-grid" style="width: 14px; height: 14px;"></i>
+            <span>返回方案展示中心 (Showcase)</span>
+        </a>
+        <div class="scheme-switcher">
+            <span style="color: var(--text-muted); margin-right: 4px;">当前方案：</span>
+            <a href="concept_a_bento.html" class="scheme-tag inactive">A. Bento 监控大屏</a>
+            <a href="concept_b_linear.html" class="scheme-tag active">B. Linear 极简工坊</a>
+            <a href="concept_c_clarity.html" class="scheme-tag inactive">C. 北欧明暗中枢</a>
+        </div>
+    </div>
+
+    <div class="app-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-top">
+                <div class="brand-workspace">
+                    <div class="brand-logo">
+                        <i data-lucide="terminal" style="width: 16px; height: 16px;"></i>
+                    </div>
+                    <div>
+                        <div class="brand-text">Aetherial Studio</div>
+                        <div class="brand-sub">Weather Precision Aggregator</div>
+                    </div>
+                </div>
+
+                <!-- Command Bar Trigger (Cmd+K) -->
+                <div class="cmd-bar-trigger" onclick="openCmdPalette()">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="search" style="width: 14px; height: 14px;"></i>
+                        <span>快捷命令 / 搜索...</span>
+                    </div>
+                    <span class="kbd-key">⌘K</span>
+                </div>
+
+                <!-- Nav Menu -->
+                <div class="nav-group">
+                    <div class="nav-label">核心工作台</div>
+                    <div class="nav-item active" onclick="switchTab('overview', this)">
+                        <i data-lucide="gauge" style="width: 16px; height: 16px;"></i>
+                        <span>总览与拓扑</span>
+                    </div>
+                    <div class="nav-item" onclick="switchTab('insights', this)">
+                        <i data-lucide="git-compare" style="width: 16px; height: 16px;"></i>
+                        <span>多源比对所</span>
+                        <span class="badge-count" style="background: rgba(245, 158, 11, 0.15); color: var(--accent-amber);">2 处偏差</span>
+                    </div>
+                    <div class="nav-item" onclick="switchTab('keys', this)">
+                        <i data-lucide="key" style="width: 16px; height: 16px;"></i>
+                        <span>Key 池与网关</span>
+                        <span class="badge-count">6 组</span>
+                    </div>
+                    <div class="nav-item" onclick="switchTab('scheduler', this)">
+                        <i data-lucide="calendar-clock" style="width: 16px; height: 16px;"></i>
+                        <span>Celery 定时调度</span>
+                    </div>
+                    <div class="nav-item" onclick="switchTab('playground', this)">
+                        <i data-lucide="play" style="width: 16px; height: 16px;"></i>
+                        <span>API 交互沙盒</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-bottom">
+                <div class="online-status">
+                    <div class="status-light"></div>
+                    <span>Celery Worker 在线</span>
+                </div>
+                <span style="font-family: var(--font-mono); color: var(--text-muted); font-size: 11px;">v4.1.0</span>
+            </div>
+        </aside>
+
+        <!-- Main Content Stage -->
+        <main class="main-stage">
+            <!-- Header -->
+            <header class="stage-header">
+                <div class="stage-title" id="currentTabHeading">
+                    <i data-lucide="gauge" style="width: 16px; height: 16px; color: var(--accent-blue);"></i>
+                    <span>总览与系统数据流动拓扑</span>
+                </div>
+                <div class="stage-actions">
+                    <div style="font-family: var(--font-mono); color: var(--text-muted); font-size: 12px; margin-right: 8px;">
+                        时区: Asia/Shanghai (北京时间)
+                    </div>
+                    <button class="btn-zinc" onclick="quickRefresh()">
+                        <i data-lucide="refresh-ccw" style="width: 13px; height: 13px;"></i>
+                        <span>刷新状态</span>
+                    </button>
+                    <button class="btn-primary" onclick="openCmdPalette()">
+                        <i data-lucide="command" style="width: 13px; height: 13px;"></i>
+                        <span>快捷动作</span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- TAB 1: OVERVIEW -->
+            <div class="tab-view active" id="tab-overview">
+                <!-- KPI Row -->
+                <div class="kpi-row">
+                    <div class="kpi-box">
+                        <div class="kpi-title">
+                            <span>今日总请求吞吐</span>
+                            <i data-lucide="activity" style="width: 14px; height: 14px;"></i>
+                        </div>
+                        <div class="kpi-num">48,290</div>
+                        <div class="kpi-sub">
+                            <i data-lucide="arrow-up-right" style="width: 12px; height: 12px;"></i>
+                            <span>QPM 峰值 580 req/m</span>
+                        </div>
+                    </div>
+
+                    <div class="kpi-box">
+                        <div class="kpi-title">
+                            <span>城市缓存命中率</span>
+                            <i data-lucide="hard-drive" style="width: 14px; height: 14px;"></i>
+                        </div>
+                        <div class="kpi-num">98.6%</div>
+                        <div class="kpi-sub">
+                            <i data-lucide="check" style="width: 12px; height: 12px;"></i>
+                            <span>有效规避三方额度超支</span>
+                        </div>
+                    </div>
+
+                    <div class="kpi-box">
+                        <div class="kpi-title">
+                            <span>渠道平均抓取延迟</span>
+                            <i data-lucide="timer" style="width: 14px; height: 14px;"></i>
+                        </div>
+                        <div class="kpi-num">124 ms</div>
+                        <div class="kpi-sub" style="color: var(--accent-cyan);">
+                            <span>和风 94ms · 百度 140ms</span>
+                        </div>
+                    </div>
+
+                    <div class="kpi-box">
+                        <div class="kpi-title">
+                            <span>有效 Key 轮询健康率</span>
+                            <i data-lucide="shield" style="width: 14px; height: 14px;"></i>
+                        </div>
+                        <div class="kpi-num">100%</div>
+                        <div class="kpi-sub">
+                            <i data-lucide="check" style="width: 12px; height: 12px;"></i>
+                            <span>无任何失效/熔断 Key</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Topology Pipeline -->
+                <div class="topology-panel">
+                    <div class="panel-heading">
+                        <i data-lucide="network" style="width: 16px; height: 16px; color: var(--accent-blue);"></i>
+                        <span>数据清洗与汇聚流向架构图 (Data Ingestion Pipeline)</span>
+                    </div>
+                    <div class="pipe-diagram">
+                        <!-- Upstream Sources -->
+                        <div class="pipe-card">
+                            <div style="font-weight: 600; margin-bottom: 6px; color: #fff;">上游异构气象源</div>
+                            <div style="display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: var(--text-muted);">
+                                <span>• 和风 QWeather (Geo API)</span>
+                                <span>• 百度地图气象服务 (AK/SK)</span>
+                                <span>• 易客天气开放平台</span>
+                            </div>
+                        </div>
+
+                        <!-- Arrow 1 -->
+                        <div class="pipe-arrow">
+                            <i data-lucide="arrow-right" style="width: 16px; height: 16px;"></i>
+                            <span>Fetcher 工厂</span>
+                        </div>
+
+                        <!-- Aggregator Core -->
+                        <div class="pipe-card" style="border-color: var(--accent-blue); background: #151a24;">
+                            <div style="font-weight: 600; margin-bottom: 6px; color: var(--accent-blue);">聚合调度清洗引擎</div>
+                            <div style="font-size: 11px; color: var(--text-secondary);">
+                                <span>• StandardDailyWeather 规范化</span><br>
+                                <span>• Celery 异步定时补采 + 抖动</span><br>
+                                <span>• Redis 缓存比对与失效判定</span>
+                            </div>
+                        </div>
+
+                        <!-- Arrow 2 -->
+                        <div class="pipe-arrow">
+                            <i data-lucide="arrow-right" style="width: 16px; height: 16px;"></i>
+                            <span>FastAPI 网关</span>
+                        </div>
+
+                        <!-- Downstream -->
+                        <div class="pipe-card">
+                            <div style="font-weight: 600; margin-bottom: 6px; color: #fff;">客户端统一接入层</div>
+                            <div style="font-size: 11px; color: var(--text-muted);">
+                                <span>• /api/v1/weather/{city}</span><br>
+                                <span>• API Key 鉴权与 QPM 限流</span><br>
+                                <span>• IP 白名单与统计打点</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Audit Logs -->
+                <div class="keys-table-card">
+                    <div style="padding: 14px 18px; border-bottom: 1px solid var(--border-color); font-weight: 600;">
+                        近期调度与系统事件流
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>时间 (北京时间)</th>
+                                <th>事件类型</th>
+                                <th>对象</th>
+                                <th>耗时 / 结果</th>
+                                <th>状态</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="font-family: var(--font-mono);">15:30:04</td>
+                                <td>Celery 定时增量抓取</td>
+                                <td>北京市 (110000)</td>
+                                <td>142ms / 3渠道入库</td>
+                                <td><span style="color: var(--accent-emerald);">● 成功</span></td>
+                            </tr>
+                            <tr>
+                                <td style="font-family: var(--font-mono);">15:30:08</td>
+                                <td>Celery 随机抖动同步</td>
+                                <td>上海市 (310000)</td>
+                                <td>98ms / 3渠道入库</td>
+                                <td><span style="color: var(--accent-emerald);">● 成功</span></td>
+                            </tr>
+                            <tr>
+                                <td style="font-family: var(--font-mono);">15:28:12</td>
+                                <td>API Key 鉴权调用</td>
+                                <td>移动端 App (ck_9f83a...)</td>
+                                <td>12ms / 缓存直接命中</td>
+                                <td><span style="color: var(--accent-cyan);">● 命中缓存</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TAB 2: MULTI-SOURCE INSIGHTS -->
+            <div class="tab-view" id="tab-insights">
+                <div class="split-workspace">
+                    <!-- Left: Cities List -->
+                    <div class="city-directory">
+                        <div class="directory-search">
+                            <div class="search-input-wrap">
+                                <i data-lucide="search" style="width: 14px; height: 14px;" class="search-icon-sm"></i>
+                                <input type="text" placeholder="按城市名或 Adcode 筛选...">
+                            </div>
+                        </div>
+                        <div class="directory-list">
+                            <button class="city-item-btn active" onclick="switchInsightCity('北京', '110000', this)">
+                                <div>
+                                    <div class="city-name-tag">北京市</div>
+                                    <div class="city-code-tag">110000 · 3 渠道同步</div>
+                                </div>
+                                <span style="font-family: var(--font-mono); font-size: 13px; font-weight: 600;">23°C</span>
+                            </button>
+                            <button class="city-item-btn" onclick="switchInsightCity('上海', '310000', this)">
+                                <div>
+                                    <div class="city-name-tag">上海市</div>
+                                    <div class="city-code-tag">310000 · 3 渠道同步</div>
+                                </div>
+                                <span style="font-family: var(--font-mono); font-size: 13px; font-weight: 600;">26°C</span>
+                            </button>
+                            <button class="city-item-btn" onclick="switchInsightCity('广州', '440100', this)">
+                                <div>
+                                    <div class="city-name-tag">广州市</div>
+                                    <div class="city-code-tag">440100 · 3 渠道同步</div>
+                                </div>
+                                <span style="font-family: var(--font-mono); font-size: 13px; font-weight: 600;">31°C</span>
+                            </button>
+                            <button class="city-item-btn" onclick="switchInsightCity('成都', '510100', this)">
+                                <div>
+                                    <div class="city-name-tag">成都市</div>
+                                    <div class="city-code-tag">510100 · 3 渠道同步</div>
+                                </div>
+                                <span style="font-family: var(--font-mono); font-size: 13px; font-weight: 600;">21°C</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Right: Matrix Table -->
+                    <div class="matrix-table-wrap">
+                        <div class="matrix-table-header">
+                            <div>
+                                <h3 style="font-size: 14px; font-weight: 600;" id="insightCityTitle">北京市 (110000) 异构气象横向交叉对比</h3>
+                                <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+                                    对比和风天气、百度气象、易客天气对同一天的温度、天气现象预报差异
+                                </div>
+                            </div>
+                            <button class="btn-zinc" onclick="triggerCitySync()">
+                                <i data-lucide="rotate-cw" style="width: 13px; height: 13px;"></i>
+                                <span>强制重新拉取比对</span>
+                            </button>
+                        </div>
+
+                        <div style="flex: 1; overflow-y: auto;">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>预报日期</th>
+                                        <th>和风天气 (QWeather)</th>
+                                        <th>百度气象 (Baidu)</th>
+                                        <th>易客天气 (Yike)</th>
+                                        <th>偏差监测 / 评价</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td style="font-weight: 600;">今天 (09-19)</td>
+                                        <td><span class="channel-chip">23° / 11° · 晴</span></td>
+                                        <td><span class="channel-chip">24° / 12° · 多云</span></td>
+                                        <td><span class="channel-chip">23° / 10° · 晴</span></td>
+                                        <td><span style="color: var(--accent-emerald);">一致 (差 1°C)</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td style="font-weight: 600;">明天 (09-20)</td>
+                                        <td><span class="channel-chip">25° / 13° · 多云</span></td>
+                                        <td><span class="channel-chip">24° / 13° · 阴</span></td>
+                                        <td><span class="channel-chip">26° / 12° · 多云</span></td>
+                                        <td><span style="color: var(--accent-emerald);">一致 (差 1°C)</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td style="font-weight: 600;">后天 (09-21)</td>
+                                        <td><span class="channel-chip">22° / 10° · 小雨</span></td>
+                                        <td><span class="channel-chip">21° / 10° · 小雨</span></td>
+                                        <td><span class="channel-chip">25° / 12° · 阴</span></td>
+                                        <td><span class="delta-warning">温差分歧 4°C · 建议和风</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td style="font-weight: 600;">周二 (09-22)</td>
+                                        <td><span class="channel-chip">19° / 9° · 晴</span></td>
+                                        <td><span class="channel-chip">20° / 8° · 晴</span></td>
+                                        <td><span class="channel-chip">19° / 8° · 晴</span></td>
+                                        <td><span style="color: var(--accent-emerald);">高度一致</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td style="font-weight: 600;">周三 (09-23)</td>
+                                        <td><span class="channel-chip">21° / 11° · 多云</span></td>
+                                        <td><span class="channel-chip">22° / 12° · 多云</span></td>
+                                        <td><span class="channel-chip">20° / 10° · 多云</span></td>
+                                        <td><span style="color: var(--accent-emerald);">一致 (差 1°C)</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <!-- Lifestyle comparison -->
+                            <div style="padding: 16px 20px; border-top: 1px solid var(--border-color); background: var(--bg-subtle);">
+                                <div style="font-weight: 600; margin-bottom: 8px; font-size: 12px; color: var(--text-primary);">
+                                    今日生活指数建议融合结果:
+                                </div>
+                                <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                                    <div style="background: var(--bg-panel); border: 1px solid var(--border-color); padding: 8px 12px; border-radius: 6px; font-size: 12px;">
+                                        <span style="color: var(--text-muted);">穿衣指数:</span> <strong>舒适</strong> (建议着薄外套或长袖衬衫)
+                                    </div>
+                                    <div style="background: var(--bg-panel); border: 1px solid var(--border-color); padding: 8px 12px; border-radius: 6px; font-size: 12px;">
+                                        <span style="color: var(--text-muted);">洗车指数:</span> <strong>适宜</strong> (未来两日无雨)
+                                    </div>
+                                    <div style="background: var(--bg-panel); border: 1px solid var(--border-color); padding: 8px 12px; border-radius: 6px; font-size: 12px;">
+                                        <span style="color: var(--text-muted);">紫外线:</span> <strong>中等</strong> (外出可涂抹防晒霜)
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: KEY ENGINE & ROUTING -->
+            <div class="tab-view" id="tab-keys">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <div>
+                        <h3 style="font-size: 15px; font-weight: 600;">网关凭证与渠道 Key 资源编排</h3>
+                        <p style="color: var(--text-muted); font-size: 12px;">管理客户端 API Key 鉴权策略及三方气象供应商的令牌池</p>
+                    </div>
+                    <button class="btn-primary" onclick="openKeyDrawer('new')">
+                        <i data-lucide="plus" style="width: 14px; height: 14px;"></i>
+                        <span>颁发客户端密钥</span>
+                    </button>
+                </div>
+
+                <div class="keys-table-card">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>凭证标识</th>
+                                <th>API Key Token</th>
+                                <th>QPM 速率限制</th>
+                                <th>IP 白名单</th>
+                                <th>今日请求计数</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="font-weight: 600; color: #fff;">移动端 App (iOS / Android)</td>
+                                <td style="font-family: var(--font-mono); color: var(--accent-cyan);">ck_9f83a8b2910bc41</td>
+                                <td>120 req/min</td>
+                                <td><span style="color: var(--accent-emerald);">2 个指定 IP</span></td>
+                                <td style="font-family: var(--font-mono);">24,190 次</td>
+                                <td>
+                                    <button class="btn-zinc" onclick="openKeyDrawer('edit', '移动端 App', 'ck_9f83a8b2910bc41', 120, '192.168.1.10\n10.0.4.1')">
+                                        <i data-lucide="sliders" style="width: 12px; height: 12px;"></i>
+                                        编辑
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight: 600; color: #fff;">官方 Web 门户网关</td>
+                                <td style="font-family: var(--font-mono); color: var(--accent-cyan);">ck_12e4d3a8288aa09</td>
+                                <td>300 req/min</td>
+                                <td><span style="color: var(--text-muted);">未启用限制</span></td>
+                                <td style="font-family: var(--font-mono);">18,340 次</td>
+                                <td>
+                                    <button class="btn-zinc" onclick="openKeyDrawer('edit', '官方 Web 门户', 'ck_12e4d3a8288aa09', 300, '')">
+                                        <i data-lucide="sliders" style="width: 12px; height: 12px;"></i>
+                                        编辑
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight: 600; color: #fff;">内部数据机器人</td>
+                                <td style="font-family: var(--font-mono); color: var(--accent-cyan);">ck_44b099120c190ff</td>
+                                <td>不设上限</td>
+                                <td><span style="color: var(--accent-emerald);">127.0.0.1</span></td>
+                                <td style="font-family: var(--font-mono);">5,760 次</td>
+                                <td>
+                                    <button class="btn-zinc" onclick="openKeyDrawer('edit', '内部数据机器人', 'ck_44b099120c190ff', 0, '127.0.0.1')">
+                                        <i data-lucide="sliders" style="width: 12px; height: 12px;"></i>
+                                        编辑
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TAB 4: CELERY SCHEDULER -->
+            <div class="tab-view" id="tab-scheduler">
+                <div style="max-width: 800px;">
+                    <div style="margin-bottom: 20px;">
+                        <h3 style="font-size: 15px; font-weight: 600;">Celery Beat 动态定时采集热调度</h3>
+                        <p style="color: var(--text-muted); font-size: 12px;">配置全量城市抓取的时间周期，变更无需重启容器，Celery Beat 将在 5 秒内自动热生效</p>
+                    </div>
+
+                    <div class="topology-panel" style="margin-bottom: 20px;">
+                        <div class="form-row">
+                            <label>Cron 调度表达式</label>
+                            <input type="text" class="form-control" id="linearCronInput" value="*/30 * * * *" style="font-family: var(--font-mono); font-size: 14px;">
+                        </div>
+
+                        <div style="margin-bottom: 16px;">
+                            <label style="display: block; font-size: 11px; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; font-weight: 600;">快速预设芯片：</label>
+                            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                <button class="btn-zinc" onclick="setLinearCron('*/15 * * * *')">每 15 分钟</button>
+                                <button class="btn-zinc" onclick="setLinearCron('*/30 * * * *')">每 30 分钟</button>
+                                <button class="btn-zinc" onclick="setLinearCron('0 * * * *')">每小时整点</button>
+                                <button class="btn-zinc" onclick="setLinearCron('0 */2 * * *')">每 2 小时</button>
+                                <button class="btn-zinc" onclick="setLinearCron('0 3 * * *')">每日凌晨 3 点</button>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <label>防风控随机请求抖动延迟 (秒)</label>
+                            <input type="number" class="form-control" value="10" min="0" max="60">
+                            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">
+                                抓取各个城市时自动在 [0, N] 秒之间休眠，分散外部请求压力。
+                            </div>
+                        </div>
+
+                        <button class="btn-primary" style="margin-top: 10px;" onclick="applyLinearScheduler()">
+                            <i data-lucide="check" style="width: 14px; height: 14px;"></i>
+                            <span>保存并下发热更新</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 5: API PLAYGROUND -->
+            <div class="tab-view" id="tab-playground">
+                <div class="playground-grid">
+                    <!-- Request Setup -->
+                    <div class="request-card">
+                        <div class="panel-heading">
+                            <i data-lucide="send" style="width: 15px; height: 15px; color: var(--accent-blue);"></i>
+                            <span>请求参数调试台</span>
+                        </div>
+                        <div class="form-row">
+                            <label>HTTP 方法 & 目标路由</label>
+                            <div style="display: flex; gap: 8px;">
+                                <span class="kbd-key" style="padding: 6px 12px; font-weight: 600; background: rgba(59, 130, 246, 0.2); color: var(--accent-blue);">GET</span>
+                                <input type="text" class="form-control" value="/api/v1/weather/上海" id="pgRoute">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <label>客户端鉴权密钥 (Header: X-API-Key)</label>
+                            <input type="text" class="form-control" value="ck_9f83a8b2910bc41" style="font-family: var(--font-mono);">
+                        </div>
+                        <div class="form-row">
+                            <label>模拟参数</label>
+                            <div style="display: flex; gap: 10px;">
+                                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                                    <input type="checkbox" checked> 强制三方源多日预报明细
+                                </label>
+                            </div>
+                        </div>
+                        <div style="margin-top: auto;">
+                            <button class="btn-primary" style="width: 100%; justify-content: center; padding: 10px;" onclick="runPlaygroundTest()">
+                                <i data-lucide="play" style="width: 14px; height: 14px;"></i>
+                                <span>发起实时聚合请求测试</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Response Payload -->
+                    <div class="response-card">
+                        <div class="panel-heading" style="justify-content: space-between;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <i data-lucide="code-2" style="width: 15px; height: 15px; color: var(--accent-emerald);"></i>
+                                <span>聚合响应报文 (Response Payload)</span>
+                            </div>
+                            <span style="font-size: 11px; color: var(--accent-emerald); font-family: var(--font-mono);" id="pgStatus">200 OK · 84ms</span>
+                        </div>
+                        <div class="json-viewer" id="pgJsonView">{
+  "_id": "310000",
+  "city_name": "上海",
+  "last_updated_at": "2026-09-19T15:45:00+08:00",
+  "sources": {
+    "hefeng": [
+      {
+        "date": "2026-09-19",
+        "temp_high": 26,
+        "temp_low": 18,
+        "weather_day": "小雨",
+        "weather_night": "阴",
+        "humidity": 78,
+        "wind_direction": "东南风",
+        "wind_scale": "3-4级"
+      }
+    ],
+    "baidu": [
+      {
+        "date": "2026-09-19",
+        "temp_high": 25,
+        "temp_low": 17,
+        "weather_day": "阴",
+        "weather_night": "多云"
+      }
+    ]
+  }
+}</div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Key Drawer Overlay -->
+    <div class="drawer-overlay" id="keyDrawer">
+        <div class="drawer-sheet">
+            <div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3 style="font-size: 16px; font-weight: 600;" id="drawerTitle">配置客户端密钥</h3>
+                    <button class="btn-zinc" onclick="closeDrawer()" style="padding: 4px;"><i data-lucide="x" style="width: 16px; height: 16px;"></i></button>
+                </div>
+                <div class="form-row">
+                    <label>客户端名称标识</label>
+                    <input type="text" class="form-control" id="dKeyName">
+                </div>
+                <div class="form-row">
+                    <label>API Key Token (自定义密钥值)</label>
+                    <input type="text" class="form-control" id="dKeyValue" style="font-family: var(--font-mono);">
+                </div>
+                <div class="form-row">
+                    <label>QPM 速率限制 (0 为不限制)</label>
+                    <input type="number" class="form-control" id="dKeyQpm">
+                </div>
+                <div class="form-row">
+                    <label>IP 白名单规则 (每行一个)</label>
+                    <textarea class="form-control" id="dKeyIps" rows="4" style="font-family: var(--font-mono);"></textarea>
+                </div>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-zinc" style="flex: 1; justify-content: center;" onclick="closeDrawer()">取消</button>
+                <button class="btn-primary" style="flex: 1; justify-content: center;" onclick="saveDrawerKey()">保存并应用</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Command Palette (Cmd+K) -->
+    <div class="cmd-modal-backdrop" id="cmdPalette" onclick="handlePaletteBackdrop(event)">
+        <div class="cmd-dialog">
+            <div class="cmd-input-wrap">
+                <i data-lucide="search" style="width: 16px; height: 16px; color: var(--text-muted);"></i>
+                <input type="text" placeholder="输入指令或查找城市... (按 Esc 退出)" id="cmdSearchInput" autofocus>
+            </div>
+            <div class="cmd-list">
+                <div class="cmd-item" onclick="execCmd('insight-beijing')">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="map-pin" style="width: 14px; height: 14px;"></i>
+                        <span>查看北京市气象多源比对</span>
+                    </div>
+                    <span class="cmd-tag">Insights</span>
+                </div>
+                <div class="cmd-item" onclick="execCmd('goto-scheduler')">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="clock" style="width: 14px; height: 14px;"></i>
+                        <span>调整 Celery 定时采集周期</span>
+                    </div>
+                    <span class="cmd-tag">Scheduler</span>
+                </div>
+                <div class="cmd-item" onclick="execCmd('new-key')">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="key" style="width: 14px; height: 14px;"></i>
+                        <span>创建新的客户端访问 Key</span>
+                    </div>
+                    <span class="cmd-tag">Security</span>
+                </div>
+                <div class="cmd-item" onclick="execCmd('goto-playground')">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <i data-lucide="play" style="width: 14px; height: 14px;"></i>
+                        <span>打开 API 交互测试台</span>
+                    </div>
+                    <span class="cmd-tag">Sandbox</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Banner -->
+    <div class="toast-banner" id="toastBanner">
+        <i data-lucide="check-circle-2" style="width: 16px; height: 16px; color: var(--accent-emerald);"></i>
+        <span id="toastBannerText">操作已成功同步</span>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        // Tab Switching
+        function switchTab(tabId, elem) {
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            elem.classList.add('active');
+
+            document.querySelectorAll('.tab-view').forEach(view => view.classList.remove('active'));
+            const targetView = document.getElementById(`tab-${tabId}`);
+            if (targetView) targetView.classList.add('active');
+
+            // Update Header Title
+            const titles = {
+                'overview': '总览与系统数据流动拓扑',
+                'insights': '多源气象异构同屏交叉比对',
+                'keys': '网关凭证与渠道 Key 编排',
+                'scheduler': 'Celery Beat 动态定时采集热调度',
+                'playground': 'API 交互沙盒与实时联调'
+            };
+            document.getElementById('currentTabHeading').querySelector('span').textContent = titles[tabId];
+        }
+
+        // City Switch in Insights
+        function switchInsightCity(city, adcode, btn) {
+            document.querySelectorAll('.city-item-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById('insightCityTitle').textContent = `${city}市 (${adcode}) 异构气象横向交叉对比`;
+            showNotification(`已载入 ${city}市 详细多源对比矩阵`);
+        }
+
+        function triggerCitySync() {
+            showNotification('已向后端派发城市即时补采任务');
+        }
+
+        // Drawer
+        function openKeyDrawer(mode, name='', token='', qpm=60, ips='') {
+            document.getElementById('drawerTitle').textContent = mode === 'new' ? '颁发客户端密钥' : `编辑密钥: ${name}`;
+            document.getElementById('dKeyName').value = name || '新集成应用';
+            document.getElementById('dKeyValue').value = token || 'ck_' + Math.random().toString(36).substring(2, 14);
+            document.getElementById('dKeyQpm').value = qpm;
+            document.getElementById('dKeyIps').value = ips;
+            document.getElementById('keyDrawer').style.display = 'flex';
+        }
+
+        function closeDrawer() {
+            document.getElementById('keyDrawer').style.display = 'none';
+        }
+
+        function saveDrawerKey() {
+            closeDrawer();
+            showNotification('客户端 Key 配置已保存并即时生效');
+        }
+
+        // Scheduler
+        function setLinearCron(cron) {
+            document.getElementById('linearCronInput').value = cron;
+        }
+
+        function applyLinearScheduler() {
+            const cron = document.getElementById('linearCronInput').value;
+            showNotification(`Celery Beat 已热重载生效为: ${cron}`);
+        }
+
+        // Playground
+        function runPlaygroundTest() {
+            const statusEl = document.getElementById('pgStatus');
+            statusEl.textContent = '请求处理中...';
+            setTimeout(() => {
+                statusEl.textContent = '200 OK · 76ms';
+                showNotification('测试请求成功，返回三方标准化报文');
+            }, 400);
+        }
+
+        // Cmd+K Palette
+        function openCmdPalette() {
+            document.getElementById('cmdPalette').style.display = 'flex';
+            document.getElementById('cmdSearchInput').focus();
+        }
+
+        function closeCmdPalette() {
+            document.getElementById('cmdPalette').style.display = 'none';
+        }
+
+        function handlePaletteBackdrop(e) {
+            if (e.target.id === 'cmdPalette') closeCmdPalette();
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+                e.preventDefault();
+                openCmdPalette();
+            }
+            if (e.key === 'Escape') {
+                closeCmdPalette();
+                closeDrawer();
+            }
+        });
+
+        function execCmd(cmd) {
+            closeCmdPalette();
+            if (cmd === 'insight-beijing') {
+                switchTab('insights', document.querySelectorAll('.nav-item')[1]);
+            } else if (cmd === 'goto-scheduler') {
+                switchTab('scheduler', document.querySelectorAll('.nav-item')[3]);
+            } else if (cmd === 'new-key') {
+                openKeyDrawer('new');
+            } else if (cmd === 'goto-playground') {
+                switchTab('playground', document.querySelectorAll('.nav-item')[4]);
+            }
+        }
+
+        function quickRefresh() {
+            showNotification('所有指标与连接池状态已刷新');
+        }
+
+        function showNotification(msg) {
+            const banner = document.getElementById('toastBanner');
+            document.getElementById('toastBannerText').textContent = msg;
+            banner.classList.add('show');
+            setTimeout(() => banner.classList.remove('show'), 2600);
+        }
+    </script>
+</body>
+</html>

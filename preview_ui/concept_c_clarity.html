@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>方案 C: Nordic Clarity - 北欧明暗双生极简气象中枢</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --transition-theme: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        /* Light Theme (Default) */
+        html[data-theme="light"] {
+            --bg-page: #f8fafc;
+            --bg-card: #ffffff;
+            --bg-card-subtle: #f1f5f9;
+            --border-card: #e2e8f0;
+            --border-card-hover: #cbd5e1;
+            --text-title: #0f172a;
+            --text-body: #334155;
+            --text-muted: #64748b;
+            --text-faint: #94a3b8;
+            --accent: #0ea5e9;
+            --accent-soft: rgba(14, 165, 233, 0.1);
+            --accent-green: #10b981;
+            --accent-amber: #f59e0b;
+            --shadow-card: 0 4px 20px -2px rgba(0, 0, 0, 0.05), 0 2px 6px -1px rgba(0, 0, 0, 0.02);
+            --shadow-hover: 0 12px 30px -4px rgba(0, 0, 0, 0.08), 0 4px 10px -2px rgba(0, 0, 0, 0.04);
+            --gradient-weather: linear-gradient(135deg, #e0f2fe 0%, #f0fdf4 100%);
+        }
+
+        /* Dark Theme */
+        html[data-theme="dark"] {
+            --bg-page: #0b0f19;
+            --bg-card: #111827;
+            --bg-card-subtle: #1f2937;
+            --border-card: #1f2937;
+            --border-card-hover: #374151;
+            --text-title: #f8fafc;
+            --text-body: #cbd5e1;
+            --text-muted: #94a3b8;
+            --text-faint: #64748b;
+            --accent: #38bdf8;
+            --accent-soft: rgba(56, 189, 248, 0.12);
+            --accent-green: #34d399;
+            --accent-amber: #fbbf24;
+            --shadow-card: 0 4px 20px -2px rgba(0, 0, 0, 0.4);
+            --shadow-hover: 0 12px 30px -4px rgba(0, 0, 0, 0.6);
+            --gradient-weather: linear-gradient(135deg, #0c4a6e 0%, #064e3b 100%);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            transition: var(--transition-theme);
+        }
+
+        body {
+            background-color: var(--bg-page);
+            color: var(--text-body);
+            font-family: 'Outfit', sans-serif;
+            min-height: 100vh;
+            padding-bottom: 60px;
+        }
+
+        /* Top Navigator Bar */
+        .preview-banner {
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border-card);
+            padding: 8px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 13px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .preview-banner a {
+            color: var(--text-muted);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 500;
+        }
+        .preview-banner a:hover {
+            color: var(--accent);
+        }
+        .scheme-switcher {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .scheme-tag {
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .scheme-tag.active {
+            background: var(--accent);
+            color: #fff;
+        }
+        .scheme-tag.inactive {
+            background: var(--bg-card-subtle);
+            color: var(--text-muted);
+            border: 1px solid var(--border-card);
+        }
+
+        /* Container */
+        .container {
+            max-width: 1240px;
+            margin: 0 auto;
+            padding: 30px 24px;
+        }
+
+        /* Top Header */
+        .clarity-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 36px;
+        }
+        .brand-title {
+            font-size: 26px;
+            font-weight: 700;
+            color: var(--text-title);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            letter-spacing: -0.5px;
+        }
+        .brand-sub {
+            color: var(--text-muted);
+            font-size: 14px;
+            margin-top: 4px;
+        }
+
+        /* Theme Toggle Pill Button */
+        .theme-toggle-btn {
+            background: var(--bg-card);
+            border: 1px solid var(--border-card);
+            border-radius: 999px;
+            padding: 6px 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            box-shadow: var(--shadow-card);
+            color: var(--text-title);
+            font-size: 13px;
+            font-weight: 500;
+        }
+        .theme-toggle-btn:hover {
+            border-color: var(--accent);
+            transform: translateY(-1px);
+        }
+
+        /* Atmospheric Hero Card */
+        .hero-weather-card {
+            background: var(--gradient-weather);
+            border: 1px solid var(--border-card);
+            border-radius: 24px;
+            padding: 32px;
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--shadow-card);
+        }
+        .weather-location-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 24px;
+        }
+        .location-badge {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--accent);
+            background: var(--bg-card);
+            padding: 4px 12px;
+            border-radius: 999px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+        .main-temp-val {
+            font-size: 72px;
+            font-weight: 700;
+            line-height: 1;
+            color: var(--text-title);
+            margin: 12px 0 8px;
+        }
+        .condition-badge-group {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-size: 16px;
+            color: var(--text-body);
+            font-weight: 500;
+        }
+
+        /* Channel Chips in Hero */
+        .sources-comparison-pills {
+            display: flex;
+            gap: 12px;
+            margin-top: 28px;
+            flex-wrap: wrap;
+        }
+        .source-pill-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-card);
+            border-radius: 14px;
+            padding: 12px 18px;
+            flex: 1;
+            min-width: 200px;
+            box-shadow: var(--shadow-card);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .source-pill-title {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 2px;
+        }
+        .source-pill-temp {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-title);
+        }
+
+        /* Grid of Service Controls */
+        .control-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            margin-bottom: 30px;
+        }
+
+        .clarity-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-card);
+            border-radius: 18px;
+            padding: 24px;
+            box-shadow: var(--shadow-card);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .clarity-card:hover {
+            box-shadow: var(--shadow-hover);
+            border-color: var(--border-card-hover);
+        }
+        .card-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px;
+        }
+        .card-heading {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-title);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .card-icon-round {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: var(--accent-soft);
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Channel Quota Progress */
+        .quota-item {
+            margin-bottom: 14px;
+        }
+        .quota-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+        .progress-capsule {
+            height: 8px;
+            background: var(--bg-card-subtle);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+        .progress-capsule-bar {
+            height: 100%;
+            border-radius: 999px;
+            transition: width 0.6s ease;
+        }
+
+        /* Celery Control */
+        .cron-pill-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin: 14px 0;
+        }
+        .cron-btn {
+            background: var(--bg-card-subtle);
+            border: 1px solid var(--border-card);
+            color: var(--text-body);
+            border-radius: 8px;
+            padding: 6px 10px;
+            font-size: 12px;
+            font-family: inherit;
+            cursor: pointer;
+        }
+        .cron-btn.active {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+            font-weight: 600;
+        }
+
+        /* Client Keys List Card */
+        .keys-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border-card);
+            border-radius: 18px;
+            padding: 24px;
+            box-shadow: var(--shadow-card);
+        }
+        .keys-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 14px;
+            font-size: 13px;
+        }
+        .keys-table th {
+            text-align: left;
+            padding: 10px 12px;
+            color: var(--text-muted);
+            font-weight: 500;
+            border-bottom: 1px solid var(--border-card);
+        }
+        .keys-table td {
+            padding: 14px 12px;
+            border-bottom: 1px solid var(--border-card);
+            color: var(--text-body);
+        }
+        .token-chip {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--bg-card-subtle);
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+        }
+
+        /* Buttons */
+        .btn-modern {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 13px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(14, 165, 233, 0.25);
+        }
+        .btn-modern:hover {
+            opacity: 0.92;
+            transform: translateY(-1px);
+        }
+
+        /* Toast */
+        .toast-bubble {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-card);
+            box-shadow: var(--shadow-hover);
+            color: var(--text-title);
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            z-index: 999;
+        }
+        .toast-bubble.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        @media (max-width: 900px) {
+            .control-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Top Preview Hub Banner -->
+    <div class="preview-banner">
+        <a href="index.html">
+            <i data-lucide="layout-grid" style="width: 15px; height: 15px;"></i>
+            <span>返回方案展示中枢 (Preview Hub)</span>
+        </a>
+        <div class="scheme-switcher">
+            <span style="color: var(--text-muted); margin-right: 4px;">当前方案：</span>
+            <a href="concept_a_bento.html" class="scheme-tag inactive">A. Bento 监控大屏</a>
+            <a href="concept_b_linear.html" class="scheme-tag inactive">B. Linear 极简工坊</a>
+            <a href="concept_c_clarity.html" class="scheme-tag active">C. 北欧明暗中枢</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Header -->
+        <div class="clarity-header">
+            <div>
+                <div class="brand-title">
+                    <i data-lucide="sun-snow" style="color: var(--accent); width: 28px; height: 28px;"></i>
+                    Nordic Clarity
+                </div>
+                <div class="brand-sub">北欧现代纯净气象聚合调度中枢 · 自适应双模设计</div>
+            </div>
+
+            <!-- Light / Dark Toggle Button -->
+            <button class="theme-toggle-btn" onclick="toggleTheme()">
+                <i data-lucide="moon" id="themeIcon" style="width: 16px; height: 16px;"></i>
+                <span id="themeText">切换至深色模式</span>
+            </button>
+        </div>
+
+        <!-- Atmospheric Hero Card -->
+        <div class="hero-weather-card">
+            <div class="weather-location-row">
+                <div>
+                    <div class="location-badge">
+                        <i data-lucide="map-pin" style="width: 13px; height: 13px;"></i>
+                        <span>北京市 (110000) · 实时数据融合</span>
+                    </div>
+                    <div class="main-temp-val">23°</div>
+                    <div class="condition-badge-group">
+                        <span>晴转多云</span>
+                        <span>·</span>
+                        <span>东南风 2级</span>
+                        <span>·</span>
+                        <span style="color: var(--accent-green); font-weight: 600;">优 (AQI 32)</span>
+                    </div>
+                </div>
+
+                <div style="text-align: right;">
+                    <div style="font-size: 13px; color: var(--text-muted);">统一时区基准</div>
+                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 600; color: var(--text-title); margin-top: 4px;">
+                        Asia/Shanghai
+                    </div>
+                    <button class="btn-modern" style="margin-top: 18px;" onclick="refreshData()">
+                        <i data-lucide="refresh-cw" style="width: 14px; height: 14px;"></i>
+                        <span>即时刷新全源数据</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Sources Comparison Bar -->
+            <div class="sources-comparison-pills">
+                <div class="source-pill-card">
+                    <div>
+                        <div class="source-pill-title">和风天气 (QWeather)</div>
+                        <div style="font-size: 12px; color: var(--text-body);">23° / 11° · 晴</div>
+                    </div>
+                    <div class="source-pill-temp">23°</div>
+                </div>
+
+                <div class="source-pill-card">
+                    <div>
+                        <div class="source-pill-title">百度地图气象 (Baidu)</div>
+                        <div style="font-size: 12px; color: var(--text-body);">24° / 12° · 多云</div>
+                    </div>
+                    <div class="source-pill-temp">24°</div>
+                </div>
+
+                <div class="source-pill-card">
+                    <div>
+                        <div class="source-pill-title">易客天气 (Yike)</div>
+                        <div style="font-size: 12px; color: var(--text-body);">23° / 10° · 晴</div>
+                    </div>
+                    <div class="source-pill-temp">23°</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3 Pillars Control Grid -->
+        <div class="control-grid">
+            <!-- Pillar 1: Channel Health -->
+            <div class="clarity-card">
+                <div>
+                    <div class="card-top">
+                        <div class="card-heading">
+                            <span>渠道配额与健康罗盘</span>
+                        </div>
+                        <div class="card-icon-round">
+                            <i data-lucide="activity" style="width: 18px; height: 18px;"></i>
+                        </div>
+                    </div>
+
+                    <div class="quota-item">
+                        <div class="quota-header">
+                            <span>和风天气 (QWeather)</span>
+                            <span style="color: var(--accent);">42% (840/2000)</span>
+                        </div>
+                        <div class="progress-capsule">
+                            <div class="progress-capsule-bar" style="width: 42%; background: var(--accent);"></div>
+                        </div>
+                    </div>
+
+                    <div class="quota-item">
+                        <div class="quota-header">
+                            <span>百度气象 (Baidu)</span>
+                            <span style="color: var(--accent-green);">65% (3900/6000)</span>
+                        </div>
+                        <div class="progress-capsule">
+                            <div class="progress-capsule-bar" style="width: 65%; background: var(--accent-green);"></div>
+                        </div>
+                    </div>
+
+                    <div class="quota-item">
+                        <div class="quota-header">
+                            <span>易客天气 (Yike)</span>
+                            <span style="color: var(--accent-amber);">88% (接近上限)</span>
+                        </div>
+                        <div class="progress-capsule">
+                            <div class="progress-capsule-bar" style="width: 88%; background: var(--accent-amber);"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="font-size: 12px; color: var(--text-muted); margin-top: 14px;">
+                    自动故障转移已启用，熔断机制正常运行。
+                </div>
+            </div>
+
+            <!-- Pillar 2: Celery Dynamic Beat -->
+            <div class="clarity-card">
+                <div>
+                    <div class="card-top">
+                        <div class="card-heading">
+                            <span>Celery 动态定时同步</span>
+                        </div>
+                        <div class="card-icon-round">
+                            <i data-lucide="calendar" style="width: 18px; height: 18px;"></i>
+                        </div>
+                    </div>
+
+                    <div style="font-size: 13px; color: var(--text-muted);">
+                        当前同步频次：<strong style="color: var(--text-title);" id="currentCronLabel">每 30 分钟</strong>
+                    </div>
+
+                    <div class="cron-pill-bar">
+                        <button class="cron-btn" onclick="selectCron('*/15 * * * *', '每 15 分钟', this)">每 15 分钟</button>
+                        <button class="cron-btn active" onclick="selectCron('*/30 * * * *', '每 30 分钟', this)">每 30 分钟</button>
+                        <button class="cron-btn" onclick="selectCron('0 * * * *', '每小时', this)">每小时</button>
+                        <button class="cron-btn" onclick="selectCron('0 */2 * * *', '每 2 小时', this)">每 2 小时</button>
+                    </div>
+
+                    <div style="font-size: 12px; color: var(--text-muted); margin-top: 10px;">
+                        随机抓取抖动：<strong>10 秒</strong> (有效分散请求峰值防封禁)
+                    </div>
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--accent-green);">
+                    <i data-lucide="check-circle" style="width: 14px; height: 14px;"></i>
+                    <span>变更将在 5 秒内热重载生效</span>
+                </div>
+            </div>
+
+            <!-- Pillar 3: Gateway Stats -->
+            <div class="clarity-card">
+                <div>
+                    <div class="card-top">
+                        <div class="card-heading">
+                            <span>网关防护与吞吐指标</span>
+                        </div>
+                        <div class="card-icon-round">
+                            <i data-lucide="shield-check" style="width: 18px; height: 18px;"></i>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: baseline; margin: 10px 0;">
+                        <span style="font-size: 13px; color: var(--text-muted);">今日 API 成功调用</span>
+                        <span style="font-size: 28px; font-weight: 700; color: var(--text-title); font-family: 'JetBrains Mono';">48,290</span>
+                    </div>
+
+                    <div style="font-size: 12px; color: var(--text-muted); display: flex; flex-direction: column; gap: 6px;">
+                        <div>• 拦截未授权访问: <strong style="color: var(--accent-amber);">14 次</strong></div>
+                        <div>• 触发 QPM 限流: <strong>0 次</strong></div>
+                        <div>• Redis 缓存命中率: <strong style="color: var(--accent-green);">98.6%</strong></div>
+                    </div>
+                </div>
+
+                <button class="btn-modern" style="background: var(--bg-card-subtle); color: var(--text-title); box-shadow: none; border: 1px solid var(--border-card);" onclick="showToast('已生成今日网关流量与鉴权审计报告')">
+                    <i data-lucide="file-text" style="width: 14px; height: 14px;"></i>
+                    <span>查看完整调用日志</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Bottom Client Keys List -->
+        <div class="keys-section">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h3 style="font-size: 16px; font-weight: 600; color: var(--text-title);">客户端凭证与访问控制列表</h3>
+                    <p style="font-size: 13px; color: var(--text-muted);">为移动应用、Web 前端等业务系统颁发独立的鉴权密钥与限流规则</p>
+                </div>
+                <button class="btn-modern" onclick="showToast('打开颁发新密钥对话框')">
+                    <i data-lucide="plus" style="width: 14px; height: 14px;"></i>
+                    <span>新建客户端密钥</span>
+                </button>
+            </div>
+
+            <table class="keys-table">
+                <thead>
+                    <tr>
+                        <th>应用标识</th>
+                        <th>API Key 凭证</th>
+                        <th>QPM 限制</th>
+                        <th>IP 白名单策略</th>
+                        <th>今日调用量</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="font-weight: 600; color: var(--text-title);">移动端 App (iOS / Android)</td>
+                        <td><span class="token-chip">ck_9f83a8b2910bc41</span></td>
+                        <td>120 次/分钟</td>
+                        <td><span style="color: var(--accent-green);">已绑定 2 个指定 IP</span></td>
+                        <td style="font-family: 'JetBrains Mono'; font-weight: 600;">24,190</td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: 600; color: var(--text-title);">官方 Web 门户网关</td>
+                        <td><span class="token-chip">ck_12e4d3a8288aa09</span></td>
+                        <td>300 次/分钟</td>
+                        <td><span style="color: var(--text-muted);">不限制 IP</span></td>
+                        <td style="font-family: 'JetBrains Mono'; font-weight: 600;">18,340</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast-bubble" id="toastBubble">
+        <i data-lucide="check" style="color: var(--accent-green); width: 18px; height: 18px;"></i>
+        <span id="toastMsg">操作已完成</span>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        // Theme Toggle
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', newTheme);
+
+            const icon = document.getElementById('themeIcon');
+            const text = document.getElementById('themeText');
+            if (newTheme === 'dark') {
+                icon.setAttribute('data-lucide', 'sun');
+                text.textContent = '切换至浅色模式';
+            } else {
+                icon.setAttribute('data-lucide', 'moon');
+                text.textContent = '切换至深色模式';
+            }
+            lucide.createIcons();
+            showToast(`已切换至${newTheme === 'dark' ? '深色' : '浅色'}模式`);
+        }
+
+        // Cron Selection
+        function selectCron(cron, label, btn) {
+            document.querySelectorAll('.cron-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById('currentCronLabel').textContent = label;
+            showToast(`定时抓取任务已动态调整为：${label} (${cron})`);
+        }
+
+        function refreshData() {
+            showToast('已向各渠道发起全量数据同步与刷新');
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toastBubble');
+            document.getElementById('toastMsg').textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2800);
+        }
+    </script>
+</body>
+</html>

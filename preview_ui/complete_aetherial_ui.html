@@ -1302,31 +1302,6 @@
 </head>
 <body>
 
-    <!-- Admin Authentication Modal -->
-    <div id="loginModal" class="center-modal-backdrop" style="display: none; z-index: 9999; backdrop-filter: blur(16px); background: rgba(3, 5, 10, 0.88);">
-        <div class="sched-modal-card" style="width: 420px; text-align: center; padding: 36px 30px;">
-            <div style="width: 52px; height: 52px; margin: 0 auto 16px; border-radius: 14px; background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.3); display: flex; align-items: center; justify-content: center; color: var(--accent-cyan); box-shadow: 0 0 25px rgba(56, 189, 248, 0.2);">
-                <i data-lucide="cloud-sun" style="width: 28px; height: 28px;"></i>
-            </div>
-            <h2 style="font-size: 20px; font-weight: 700; color: #fff; margin-bottom: 6px;">聚合天气管理控制台</h2>
-            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 24px;">请输入系统管理员访问密钥以解锁全功能面板</p>
-            
-            <div style="margin-bottom: 16px; text-align: left;">
-                <label style="font-size: 11px; color: var(--text-muted); margin-bottom: 6px; display: block; font-weight: 600;">ADMIN KEY</label>
-                <div style="position: relative;">
-                    <input type="password" id="adminKeyInput" placeholder="输入管理员密钥" class="form-input-ctrl" style="padding: 11px 14px; font-family: var(--font-mono); font-size: 13px;" onkeydown="if(event.key === 'Enter') handleAdminLogin()">
-                </div>
-                <div id="loginErrorMsg" style="font-size: 12px; color: var(--accent-rose); margin-top: 6px; min-height: 18px;"></div>
-            </div>
-
-            <button id="loginSubmitBtn" class="btn-primary" style="width: 100%; justify-content: center; padding: 11px; font-size: 14px; font-weight: 600;" onclick="handleAdminLogin()">
-                <span>验证并进入控制台</span>
-                <i data-lucide="arrow-right" style="width: 16px; height: 16px;"></i>
-            </button>
-        </div>
-    </div>
-
-
     <!-- Top Preview Hub Navigator -->
     <div class="preview-banner">
         <a href="index.html">
@@ -1407,7 +1382,7 @@
                     <div class="status-light"></div>
                     <span>Celery 调度器在线</span>
                 </div>
-                <button class="btn-zinc" style="padding: 4px 8px; font-size: 11px;" onclick="handleLogout()">
+                <button class="btn-zinc" style="padding: 4px 8px; font-size: 11px;" onclick="simulateLogout()">
                     <i data-lucide="log-out" style="width: 12px; height: 12px;"></i>
                     登出
                 </button>
@@ -1451,7 +1426,7 @@
                             <span>今日聚合请求总量</span>
                             <i data-lucide="activity" style="width: 15px; height: 15px; color: var(--accent-cyan);"></i>
                         </div>
-                        <div class="kpi-num" id="kpiTodayCalls">0</div>
+                        <div class="kpi-num">48,290</div>
                         <div class="kpi-sub" style="color: var(--accent-emerald);">
                             <i data-lucide="trending-up" style="width: 12px; height: 12px;"></i>
                             <span>环比昨日增长 +12.4% · QPM 342</span>
@@ -1463,7 +1438,7 @@
                             <span>全量城市缓存命中率</span>
                             <i data-lucide="database" style="width: 15px; height: 15px; color: var(--accent-emerald);"></i>
                         </div>
-                        <div class="kpi-num" id="kpiCacheHit">98.6%</div>
+                        <div class="kpi-num">98.6%</div>
                         <div class="kpi-sub" style="color: var(--accent-emerald);">
                             <i data-lucide="check" style="width: 12px; height: 12px;"></i>
                             <span>3,142 城市已入库缓存 (24h 有效)</span>
@@ -1475,7 +1450,7 @@
                             <span>多渠道并发平均延迟</span>
                             <i data-lucide="zap" style="width: 15px; height: 15px; color: var(--accent-amber);"></i>
                         </div>
-                        <div class="kpi-num" id="kpiAvgLatency">118 <span style="font-size: 14px; font-weight: 500; color: var(--text-muted);">ms</span></div>
+                        <div class="kpi-num">118 <span style="font-size: 14px; font-weight: 500; color: var(--text-muted);">ms</span></div>
                         <div class="kpi-sub" style="color: var(--accent-cyan);">
                             <span>ThreadPool 并行抓取加速</span>
                         </div>
@@ -1486,7 +1461,7 @@
                             <span>渠道 Key 池健康率</span>
                             <i data-lucide="shield-check" style="width: 15px; height: 15px; color: var(--accent-indigo);"></i>
                         </div>
-                        <div class="kpi-num" id="kpiChannelHealth">100%</div>
+                        <div class="kpi-num">100%</div>
                         <div class="kpi-sub" style="color: var(--accent-emerald);">
                             <span>0 失效 · 3 渠道 6 组轮询 Key 正常</span>
                         </div>
@@ -1513,7 +1488,7 @@
                             </button>
                         </div>
 
-                        <div class="client-keys-list-mini" id="overviewClientKeysList">
+                        <div class="client-keys-list-mini">
                             <!-- App 1: Mobile App (No front icon, prominent today usage) -->
                             <div class="client-key-row-mini">
                                 <div class="key-title-wrap">
@@ -1577,7 +1552,7 @@
                     </div>
 
                     <!-- Right: Channel Watermarks -->
-                    <div class="panel-card" id="overviewChannelWatermarksCard">
+                    <div class="panel-card">
                         <div class="panel-title">
                             <i data-lucide="layers" style="width: 15px; height: 15px; color: var(--accent-cyan);"></i>
                             <span>上游渠道 Key 池今日配额消耗水位</span>
@@ -1841,7 +1816,7 @@
                 </div>
 
                 <!-- 3 Channel Summary Cards -->
-                <div class="channel-cards-row" id="channelSummaryCardsContainer">
+                <div class="channel-cards-row">
                     <div class="channel-summary-card">
                         <div>
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
@@ -2049,7 +2024,7 @@
                             <span>全客户端今日总调用量</span>
                             <i data-lucide="activity" style="width: 15px; height: 15px; color: var(--accent-cyan);"></i>
                         </div>
-                        <div class="kpi-num" id="clientTabTodayUsage" style="font-size: 24px; color: var(--accent-cyan);">0 <span style="font-size: 12px; font-weight: normal; color: var(--text-muted);">次</span></div>
+                        <div class="kpi-num" style="font-size: 24px; color: var(--accent-cyan);">48,290 <span style="font-size: 12px; font-weight: normal; color: var(--text-muted);">次</span></div>
                         <div class="kpi-sub" style="color: var(--accent-emerald);">
                             <span>环比昨日 +12.4% · 网关负载平稳</span>
                         </div>
@@ -2059,7 +2034,7 @@
                             <span>近 7 日全网累计调用总量</span>
                             <i data-lucide="bar-chart-2" style="width: 15px; height: 15px; color: var(--accent-blue);"></i>
                         </div>
-                        <div class="kpi-num" id="clientTab7dUsage" style="font-size: 24px; color: #fff;">0 <span style="font-size: 12px; font-weight: normal; color: var(--text-muted);">次</span></div>
+                        <div class="kpi-num" style="font-size: 24px; color: #fff;">284,500 <span style="font-size: 12px; font-weight: normal; color: var(--text-muted);">次</span></div>
                         <div class="kpi-sub" style="color: var(--text-muted);">
                             <span>7 天滚动生命周期管理</span>
                         </div>
@@ -2069,7 +2044,7 @@
                             <span>已授权活跃客户端数</span>
                             <i data-lucide="shield-check" style="width: 15px; height: 15px; color: var(--accent-emerald);"></i>
                         </div>
-                        <div class="kpi-num" id="clientTabCount" style="font-size: 24px; color: var(--accent-emerald);">0 <span style="font-size: 12px; font-weight: normal; color: var(--text-muted);">个合法凭证</span></div>
+                        <div class="kpi-num" style="font-size: 24px; color: var(--accent-emerald);">3 <span style="font-size: 12px; font-weight: normal; color: var(--text-muted);">个合法凭证</span></div>
                         <div class="kpi-sub" style="color: var(--text-muted);">
                             <span>0 个密钥触发限流熔断</span>
                         </div>
@@ -2779,23 +2754,12 @@
         function updateClock() {
             const now = new Date();
             const timeStr = now.toLocaleTimeString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false });
-            const clockEl = document.getElementById('beijingTimeText');
-            if (clockEl) clockEl.textContent = timeStr + ' CST';
+            document.getElementById('beijingTimeText').textContent = timeStr + ' CST';
         }
         setInterval(updateClock, 1000);
         updateClock();
 
-        // Global State & Data Store
-        const appState = {
-            clientKeys: [],
-            channels: [],
-            currentTab: 'overview',
-            activeInsightCity: '北京',
-            playRouteMode: 'path',
-            currentPlayCity: '上海'
-        };
-
-        // Multi-Source Weather Mock / Cache Database for Cross-Check Insights
+        // Multi-Source Weather Mock Data
         const weatherDatabase = {
             '北京': {
                 code: '110000',
@@ -2860,118 +2824,12 @@
             }
         };
 
-        // Toast Notification System
-        function quickNotify(msg, isError = false) {
-            const toast = document.getElementById('toastWidget');
-            const content = document.getElementById('toastContent');
-            if (!toast || !content) return;
-            content.textContent = msg;
-            if (isError) {
-                toast.style.borderColor = 'rgba(244, 63, 94, 0.4)';
-                toast.style.boxShadow = '0 10px 30px rgba(244, 63, 94, 0.2)';
-            } else {
-                toast.style.borderColor = 'rgba(56, 189, 248, 0.3)';
-                toast.style.boxShadow = '0 10px 30px rgba(0, 0, 0, 0.8)';
-            }
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 2800);
-        }
+        let currentActiveCity = '北京';
 
-        // Backend API Caller Helper
-        async function apiCall(endpoint, method = 'GET', body = null) {
-            const adminKey = localStorage.getItem('adminKey');
-            const headers = {
-                'Content-Type': 'application/json',
-                'X-Admin-Key': adminKey || ''
-            };
-            const opts = { method, headers };
-            if (body) opts.body = JSON.stringify(body);
-
-            try {
-                const res = await fetch(endpoint, opts);
-                if (res.status === 403) {
-                    showLoginModal();
-                    quickNotify('管理凭证失效或无权限，请重新输入 Admin Key', true);
-                    return null;
-                }
-                if (!res.ok) {
-                    const err = await res.json().catch(() => ({}));
-                    quickNotify(err.detail || `请求失败 (${res.status})`, true);
-                    return null;
-                }
-                return await res.json();
-            } catch (e) {
-                console.error('API Error:', e);
-                quickNotify('网络异常，请确认后端服务已启动', true);
-                return null;
-            }
-        }
-
-        // --- Admin Authentication ---
-        function showLoginModal() {
-            const modal = document.getElementById('loginModal');
-            if (modal) {
-                modal.style.display = 'flex';
-                document.getElementById('loginErrorMsg').textContent = '';
-                document.getElementById('adminKeyInput').focus();
-            }
-        }
-
-        function hideLoginModal() {
-            const modal = document.getElementById('loginModal');
-            if (modal) modal.style.display = 'none';
-        }
-
-        async function handleAdminLogin() {
-            const keyInput = document.getElementById('adminKeyInput');
-            const key = keyInput.value.trim();
-            const errEl = document.getElementById('loginErrorMsg');
-            const btn = document.getElementById('loginSubmitBtn');
-
-            if (!key) {
-                errEl.textContent = '请输入管理员密钥';
-                return;
-            }
-
-            btn.disabled = true;
-            btn.innerHTML = '<span>验证中...</span>';
-
-            try {
-                const res = await fetch('/api/v1/admin/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ key })
-                });
-
-                if (res.ok) {
-                    localStorage.setItem('adminKey', key);
-                    hideLoginModal();
-                    quickNotify('管理员鉴权成功，已进入控制台');
-                    await loadAllData();
-                } else {
-                    errEl.textContent = '管理员密钥验证失败，请核对后重试';
-                }
-            } catch (e) {
-                errEl.textContent = '无法连接到后端认证服务';
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<span>验证并进入控制台</span><i data-lucide="arrow-right" style="width: 16px; height: 16px;"></i>';
-                lucide.createIcons();
-            }
-        }
-
-        function handleLogout() {
-            if (confirm('确定要退出当前管理员控制台吗？')) {
-                localStorage.removeItem('adminKey');
-                location.reload();
-            }
-        }
-
-        // --- Tab Navigation Switcher ---
+        // Tab Switching
         function switchNavTab(tabId, elem) {
-            appState.currentTab = tabId;
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            if (elem) elem.classList.add('active');
+            elem.classList.add('active');
 
             document.querySelectorAll('.tab-view').forEach(v => v.classList.remove('active'));
             const targetView = document.getElementById(`tab-${tabId}`);
@@ -2988,844 +2846,23 @@
 
             const meta = tabMeta[tabId];
             if (meta) {
-                const headerTitle = document.getElementById('stageHeaderTitle');
-                if (headerTitle) {
-                    headerTitle.innerHTML = `<i data-lucide="${meta.icon}" style="width: 16px; height: 16px; color: var(--accent-cyan);"></i><span>${meta.title}</span>`;
-                }
-                const headerBadge = document.getElementById('stageHeaderBadge');
-                if (headerBadge) headerBadge.textContent = meta.badge;
+                document.getElementById('stageHeaderTitle').innerHTML = `<i data-lucide="${meta.icon}" style="width: 16px; height: 16px; color: var(--accent-cyan);"></i><span>${meta.title}</span>`;
+                document.getElementById('stageHeaderBadge').textContent = meta.badge;
                 lucide.createIcons();
             }
 
             if (tabId === 'insights') {
-                setTimeout(renderCompareChart, 60);
+                setTimeout(renderCompareChart, 50);
             }
         }
 
-        // --- Data Loading & Ingestion ---
-        async function loadAllData() {
-            const [keys, channels] = await Promise.all([
-                apiCall('/api/v1/admin/keys'),
-                apiCall('/api/v1/admin/channels')
-            ]);
-
-            if (keys) appState.clientKeys = keys;
-            if (channels) appState.channels = channels;
-
-            renderOverview();
-            renderChannelsView();
-            renderClientsView();
-            renderSchedulerView();
-            populatePlaygroundKeys();
-            lucide.createIcons();
-        }
-
-        // 1. Overview Tab Rendering
-        function renderOverview() {
-            const keys = appState.clientKeys || [];
-            const channels = appState.channels || [];
-
-            let todayTotal = 0;
-            let total7d = 0;
-            keys.forEach(k => {
-                const stats = k.stats || {};
-                todayTotal += Object.values(stats)[0] || 0;
-                total7d += (k.total_usage_7d || 0);
-            });
-
-            // Update KPI Box
-            const kpiToday = document.getElementById('kpiTodayCalls');
-            if (kpiToday) kpiToday.textContent = todayTotal.toLocaleString();
-
-            const kpiHealth = document.getElementById('kpiChannelHealth');
-            if (kpiHealth) {
-                let totalKeyCount = 0;
-                let activeKeyCount = 0;
-                channels.forEach(ch => {
-                    (ch.keys_pool || []).forEach(kp => {
-                        totalKeyCount++;
-                        if (kp.status === 'active') activeKeyCount++;
-                    });
-                });
-                const pct = totalKeyCount > 0 ? Math.round((activeKeyCount / totalKeyCount) * 100) : 100;
-                kpiHealth.textContent = `${pct}%`;
-            }
-
-            // Overview Left: Client Keys Mini List
-            const clientListWrap = document.getElementById('overviewClientKeysList');
-            if (clientListWrap) {
-                if (keys.length === 0) {
-                    clientListWrap.innerHTML = '<div style="color: var(--text-muted); font-size: 12px; padding: 24px; text-align: center;">暂无客户端访问密钥，可点击右上角颁发新 Key</div>';
-                } else {
-                    clientListWrap.innerHTML = keys.slice(0, 5).map(k => {
-                        const todayUsage = Object.values(k.stats || {})[0] || 0;
-                        const tokenShort = k.key.length > 18 ? k.key.slice(0, 10) + '...' + k.key.slice(-4) : k.key;
-                        const ipsStr = (k.ip_whitelist || []).join('\\n');
-                        const ipEnabled = !!k.ip_whitelist_enabled;
-                        const qpm = k.qpm_limit || 0;
-                        return `
-                        <div class="client-key-row-mini">
-                            <div class="key-title-wrap">
-                                <div>
-                                    <div class="key-name-txt">${k.name}</div>
-                                    <div class="key-token-mono">${tokenShort}</div>
-                                </div>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 12px;">
-                                <span class="key-tag-qpm" style="background: rgba(129, 140, 248, 0.12); color: var(--accent-indigo); border: 1px solid rgba(129, 140, 248, 0.3);">限流: ${qpm > 0 ? qpm + ' QPM' : '无限制'}</span>
-                                <div class="key-usage-highlight">
-                                    <span class="usage-caption">今日调用</span>
-                                    <span class="usage-number">${todayUsage.toLocaleString()} <span class="usage-unit">次</span></span>
-                                </div>
-                                <button class="btn-action-sm" title="编辑密钥配置" onclick="openKeyDrawer('${k.name}', '${k.key}', ${qpm}, '${ipsStr.replace(/\\n/g, '\\\\n')}', ${ipEnabled})">
-                                    <i data-lucide="settings-2" style="width: 14px; height: 14px;"></i>
-                                </button>
-                            </div>
-                        </div>
-                        `;
-                    }).join('');
-                }
-            }
-
-            // Overview Right: Channel Watermarks
-            const watermarkCard = document.getElementById('overviewChannelWatermarksCard');
-            if (watermarkCard) {
-                let watermarksHtml = `
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-                        <div class="panel-title">
-                            <i data-lucide="layers" style="width: 15px; height: 15px; color: var(--accent-cyan);"></i>
-                            <span>上游渠道 Key 池今日配额消耗水位</span>
-                        </div>
-                    </div>
-                `;
-
-                const colors = {
-                    hefeng: { color: 'var(--hefeng-color)', grad: 'linear-gradient(90deg, #0284c7, #38bdf8)' },
-                    baidu: { color: 'var(--baidu-color)', grad: 'linear-gradient(90deg, #059669, #10b981)' },
-                    yiketianqi: { color: 'var(--yike-color)', grad: 'linear-gradient(90deg, #d97706, #f59e0b)' }
-                };
-
-                channels.forEach(ch => {
-                    const chId = ch._id;
-                    const chName = ch.name || chId;
-                    const keysPool = ch.keys_pool || [];
-                    const activeKeys = keysPool.filter(k => k.status === 'active');
-                    
-                    let totalDailyLimit = 0;
-                    let todayUsed = 0;
-
-                    keysPool.forEach(kp => {
-                        totalDailyLimit += (kp.daily_limit || 2000);
-                        const stats = kp.stats || {};
-                        todayUsed += Object.values(stats)[0] || 0;
-                    });
-
-                    const pct = totalDailyLimit > 0 ? Math.min(100, Math.round((todayUsed / totalDailyLimit) * 100)) : 0;
-                    const cInfo = colors[chId] || { color: 'var(--accent-cyan)', grad: 'linear-gradient(90deg, #0284c7, #38bdf8)' };
-
-                    watermarksHtml += `
-                    <div class="channel-watermark-row">
-                        <div class="watermark-top">
-                            <div>
-                                <strong style="color: #fff;">${chName}</strong>
-                                <span style="color: var(--text-muted); font-size: 11px; margin-left: 6px;">${activeKeys.length}/${keysPool.length} 个可用 Key</span>
-                            </div>
-                            <span style="color: ${cInfo.color}; font-family: var(--font-mono); font-weight: 600;">${todayUsed.toLocaleString()} / ${totalDailyLimit.toLocaleString()} (${pct}%)</span>
-                        </div>
-                        <div class="progress-bar-bg">
-                            <div class="progress-bar-fill" style="width: ${pct}%; background: ${cInfo.grad};"></div>
-                        </div>
-                    </div>
-                    `;
-                });
-
-                watermarkCard.innerHTML = watermarksHtml;
-            }
-        }
-
-        // 2. Clients Tab Rendering
-        function renderClientsView() {
-            const keys = appState.clientKeys || [];
-
-            let todayTotal = 0;
-            let total7d = 0;
-            keys.forEach(k => {
-                const stats = k.stats || {};
-                todayTotal += Object.values(stats)[0] || 0;
-                total7d += (k.total_usage_7d || 0);
-            });
-
-            const elToday = document.getElementById('clientTabTodayUsage');
-            if (elToday) elToday.innerHTML = `${todayTotal.toLocaleString()} <span style="font-size: 12px; font-weight: normal; color: var(--text-muted);">次</span>`;
-
-            const el7d = document.getElementById('clientTab7dUsage');
-            if (el7d) el7d.innerHTML = `${total7d.toLocaleString()} <span style="font-size: 12px; font-weight: normal; color: var(--text-muted);">次</span>`;
-
-            const elCount = document.getElementById('clientTabCount');
-            if (elCount) elCount.innerHTML = `${keys.length} <span style="font-size: 12px; font-weight: normal; color: var(--text-muted);">组</span>`;
-
-            const tbody = document.getElementById('clientKeysTableBody');
-            if (!tbody) return;
-
-            if (keys.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">暂无客户端访问密钥</td></tr>';
-                return;
-            }
-
-            tbody.innerHTML = keys.map(k => {
-                const todayUsage = Object.values(k.stats || {})[0] || 0;
-                const total7d = k.total_usage_7d || 0;
-                const qpm = k.qpm_limit || 0;
-                const ips = k.ip_whitelist || [];
-                const ipEnabled = !!k.ip_whitelist_enabled;
-                const ipsStr = ips.join('\\n');
-
-                let ipBadge = '<span style="color: var(--text-muted); font-size: 12px;">未启用白名单</span>';
-                if (ipEnabled && ips.length > 0) {
-                    ipBadge = `<span class="badge badge-info" style="font-size: 11px;">已绑定 ${ips.length} 个 IP</span>`;
-                }
-
-                return `
-                <tr>
-                    <td style="font-weight: 600; color: #fff;">${k.name}</td>
-                    <td>
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <span class="token-mono">${k.key}</span>
-                            <button class="btn-action-sm" title="复制完整 Key" onclick="copyToClipboard('${k.key}')">
-                                <i data-lucide="copy" style="width: 12px; height: 12px;"></i>
-                            </button>
-                        </div>
-                    </td>
-                    <td>${qpm > 0 ? `<span class="badge badge-warning">${qpm} req/min</span>` : '<span style="color: var(--text-muted);">不限制</span>'}</td>
-                    <td>${ipBadge}</td>
-                    <td><span style="font-family: var(--font-mono); font-weight: 700; color: var(--accent-cyan); font-size: 13px;">${todayUsage.toLocaleString()} 次</span></td>
-                    <td><span style="font-family: var(--font-mono); font-weight: 600; color: #fff;">${total7d.toLocaleString()} 次</span></td>
-                    <td>
-                        <div style="display: flex; align-items: center; gap: 6px;">
-                            <button class="btn-zinc" style="padding: 4px 8px; font-size: 11px;" onclick="openKeyDrawer('${k.name}', '${k.key}', ${qpm}, '${ipsStr.replace(/\\n/g, '\\\\n')}', ${ipEnabled})">
-                                <i data-lucide="sliders" style="width: 12px; height: 12px;"></i>
-                                编辑
-                            </button>
-                            <button class="btn-zinc" style="padding: 4px 8px; font-size: 11px; color: var(--accent-rose); border-color: rgba(244, 63, 94, 0.2);" onclick="deleteClientKey('${k.key}')">
-                                <i data-lucide="trash-2" style="width: 12px; height: 12px;"></i>
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-                `;
-            }).join('');
-        }
-
-        // 3. Channels Tab Rendering
-        function renderChannelsView() {
-            const channels = appState.channels || [];
-            const cardsContainer = document.getElementById('channelSummaryCardsContainer');
-            if (cardsContainer) {
-                cardsContainer.innerHTML = channels.map(ch => {
-                    const keys = ch.keys_pool || [];
-                    const activeKeys = keys.filter(k => k.status === 'active');
-                    let totalLimit = 0;
-                    keys.forEach(k => totalLimit += (k.daily_limit || 2000));
-                    const isActive = ch.is_active !== false;
-
-                    return `
-                    <div class="channel-summary-card">
-                        <div>
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                <strong style="font-size: 14px; color: #fff;">${ch.name || ch._id} (${ch._id})</strong>
-                                <span style="font-size: 11px; color: ${isActive ? 'var(--accent-emerald)' : 'var(--accent-rose)'}; background: ${isActive ? 'rgba(16, 185, 129, 0.1)' : 'rgba(244, 63, 94, 0.1)'}; padding: 2px 6px; border-radius: 4px;">
-                                    ${isActive ? '启用中' : '已停用'}
-                                </span>
-                            </div>
-                            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">提供多维度天气实况与预报报文聚合</p>
-                            <div style="font-size: 11px; color: var(--text-secondary); line-height: 1.6;">
-                                <div>• 每日总限额: <strong>${totalLimit.toLocaleString()} 次</strong></div>
-                                <div>• 当前可用 Key: <strong>${activeKeys.length} / ${keys.length} 个</strong></div>
-                            </div>
-                        </div>
-                        <button class="btn-zinc" style="margin-top: 16px; justify-content: center;" onclick="triggerManualUpdate('${ch._id}')">
-                            <i data-lucide="refresh-cw" style="width: 13px; height: 13px;"></i>
-                            <span>手动触发异步更新</span>
-                        </button>
-                    </div>
-                    `;
-                }).join('');
-            }
-
-            // Channel Keys Table
-            const tbody = document.getElementById('channelKeysTableBody');
-            if (!tbody) return;
-
-            let rowsHtml = '';
-            channels.forEach(ch => {
-                const chId = ch._id;
-                const chName = ch.name || chId;
-                const keys = ch.keys_pool || [];
-
-                keys.forEach(kp => {
-                    const stats = kp.stats || {};
-                    const dates = Object.keys(stats).sort();
-                    const d0 = stats[dates[0]] || 0;
-                    const d1 = stats[dates[1]] || 0;
-                    const d2 = stats[dates[2]] || 0;
-                    const total3d = kp.total_3d || (d0 + d1 + d2);
-                    const isKeyActive = kp.status === 'active';
-
-                    rowsHtml += `
-                    <tr>
-                        <td><strong style="color: #fff;">${chName}</strong></td>
-                        <td>
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <span class="token-mono">${kp.key}</span>
-                                <button class="btn-action-sm" title="复制" onclick="copyToClipboard('${kp.key}')">
-                                    <i data-lucide="copy" style="width: 12px; height: 12px;"></i>
-                                </button>
-                            </div>
-                        </td>
-                        <td>${(kp.daily_limit || 2000).toLocaleString()} 次/日</td>
-                        <td>
-                            <div class="sparkline-wrap" title="近3日趋势: ${d2} -> ${d1} -> ${d0}">
-                                <div class="spark-bar" style="height: ${Math.max(4, Math.min(22, d2 / 20))}px;"></div>
-                                <div class="spark-bar" style="height: ${Math.max(4, Math.min(22, d1 / 20))}px;"></div>
-                                <div class="spark-bar" style="height: ${Math.max(4, Math.min(22, d0 / 20))}px;"></div>
-                                <span style="font-size: 11px; font-family: var(--font-mono); margin-left: 6px; color: var(--text-muted);">${d0}次 (今)</span>
-                            </div>
-                        </td>
-                        <td><strong style="font-family: var(--font-mono); color: #fff;">${total3d.toLocaleString()} 次</strong></td>
-                        <td>
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <label class="switch">
-                                    <input type="checkbox" ${isKeyActive ? 'checked' : ''} onchange="toggleChannelKeyActive(this, '${chId}', '${kp.key}')">
-                                    <span class="slider"></span>
-                                </label>
-                                <span class="key-status-text" style="font-size: 11.5px; color: ${isKeyActive ? 'var(--accent-emerald)' : 'var(--text-muted)'};">
-                                    ${isKeyActive ? '轮询中' : '已禁用'}
-                                </span>
-                            </div>
-                        </td>
-                        <td>
-                            <button class="btn-action-sm" style="color: var(--accent-rose);" title="移除此 Key" onclick="deleteChannelKey('${chId}', '${kp.key}')">
-                                <i data-lucide="trash-2" style="width: 13px; height: 13px;"></i>
-                            </button>
-                        </td>
-                    </tr>
-                    `;
-                });
-            });
-
-            if (!rowsHtml) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">各渠道暂无 Key，请点击上方添加</td></tr>';
-            } else {
-                tbody.innerHTML = rowsHtml;
-            }
-        }
-
-        // 4. Scheduler Tab Rendering (Celery Multi-Cron)
-        function renderSchedulerView() {
-            const channels = appState.channels || [];
-
-            channels.forEach(ch => {
-                const chId = ch._id;
-                let rules = [];
-                const cronVal = ch.cron || '';
-                if (typeof cronVal === 'string') {
-                    rules = cronVal.split(/[,\n]+/).map(s => s.trim()).filter(Boolean);
-                } else if (Array.isArray(cronVal)) {
-                    rules = cronVal;
-                }
-
-                const isActive = ch.is_active !== false;
-                const delay = ch.wait_max || 10;
-
-                if (chId === 'hefeng') {
-                    const toggle = document.getElementById('schedActiveHefeng');
-                    if (toggle) toggle.checked = isActive;
-                    const countBadge = document.getElementById('hefengCronCount');
-                    if (countBadge) countBadge.textContent = rules.length + ' 条';
-                    renderCronPills('hefengCronList', rules);
-                } else if (chId === 'baidu') {
-                    const toggle = document.getElementById('schedActiveBaidu');
-                    if (toggle) toggle.checked = isActive;
-                    const countBadge = document.getElementById('baiduCronCount');
-                    if (countBadge) countBadge.textContent = rules.length + ' 条';
-                    renderCronPills('baiduCronList', rules);
-                } else if (chId === 'yiketianqi') {
-                    const toggle = document.getElementById('schedActiveYike');
-                    if (toggle) toggle.checked = isActive;
-                    const countBadge = document.getElementById('yikeCronCount');
-                    if (countBadge) countBadge.textContent = rules.length + ' 条';
-                    renderCronPills('yikeCronList', rules);
-                }
-            });
-        }
-
-        function renderCronPills(containerId, rules) {
-            const container = document.getElementById(containerId);
-            if (!container) return;
-            container.innerHTML = '';
-            if (rules.length === 0) {
-                container.innerHTML = '<span style="font-size: 11px; color: var(--text-muted);">暂无配置定时采集规则</span>';
-                return;
-            }
-            rules.slice(0, 6).forEach(rule => {
-                const item = document.createElement('div');
-                item.className = 'sched-cron-badge-item';
-                item.innerHTML = `<span>${rule}</span><span style="color: var(--text-muted); font-size: 10px;">定时规则</span>`;
-                container.appendChild(item);
-            });
-        }
-
-        // 5. Playground Key Ingestion
-        function populatePlaygroundKeys() {
-            const select = document.getElementById('playKeySelect');
-            if (!select) return;
-
-            const keys = appState.clientKeys || [];
-            let optionsHtml = '';
-            keys.forEach(k => {
-                const shortKey = k.key.length > 16 ? k.key.slice(0, 10) + '...' : k.key;
-                optionsHtml += `<option value="${k.key}">${k.name} (${shortKey})</option>`;
-            });
-            optionsHtml += '<option value="custom">自定义输入 X-API-Key...</option>';
-            select.innerHTML = optionsHtml;
-        }
-
-        // --- Client Key Operations ---
-        function openAddClientModal() {
-            const modal = document.getElementById('addClientKeyModal');
-            if (modal) {
-                document.getElementById('newClientNameInput').value = '';
-                document.getElementById('newClientQpmInput').value = '60';
-                modal.style.display = 'flex';
-                document.getElementById('newClientNameInput').focus();
-            }
-        }
-
-        function closeAddClientModal() {
-            const modal = document.getElementById('addClientKeyModal');
-            if (modal) modal.style.display = 'none';
-        }
-
-        async function submitNewClientKey() {
-            const nameInput = document.getElementById('newClientNameInput');
-            const qpmInput = document.getElementById('newClientQpmInput');
-            const name = nameInput.value.trim() || '新应用终端';
-            const qpm = parseInt(qpmInput.value) || 60;
-
-            const res = await apiCall('/api/v1/admin/keys', 'POST', { name });
-            if (res && res.key) {
-                // If QPM differs from default, update it
-                if (qpm !== 60) {
-                    await apiCall(`/api/v1/admin/keys/${res.key}`, 'PUT', { qpm_limit: qpm });
-                }
-                closeAddClientModal();
-                quickNotify(`客户端密钥 [${name}] 创建成功`);
-                await loadAllData();
-            }
-        }
-
-        let originalClientKey = '';
-        function openKeyDrawer(name, token, qpm, ips, ipEnabled) {
-            originalClientKey = token;
-            document.getElementById('drawerHeading').textContent = `编辑客户端密钥: ${name}`;
-            document.getElementById('drawerKeyName').value = name;
-            document.getElementById('drawerKeyValue').value = token;
-            document.getElementById('drawerKeyQpm').value = qpm;
-            document.getElementById('drawerKeyIps').value = ips || '';
-            document.getElementById('drawerKeyIpEnabled').checked = !!ipEnabled;
-            document.getElementById('clientKeyDrawer').style.display = 'flex';
-            lucide.createIcons();
-        }
-
-        function closeKeyDrawer() {
-            document.getElementById('clientKeyDrawer').style.display = 'none';
-        }
-
-        async function saveKeyDrawer() {
-            const newKeyVal = document.getElementById('drawerKeyValue').value.trim();
-            const qpm = parseInt(document.getElementById('drawerKeyQpm').value) || 0;
-            const ipsRaw = document.getElementById('drawerKeyIps').value.trim();
-            const ipEnabled = document.getElementById('drawerKeyIpEnabled').checked;
-
-            const ipList = ipsRaw ? ipsRaw.split(/[\\n,]+/).map(s => s.trim()).filter(Boolean) : [];
-
-            const payload = {
-                qpm_limit: qpm,
-                ip_whitelist_enabled: ipEnabled,
-                ip_whitelist: ipList
-            };
-            if (newKeyVal && newKeyVal !== originalClientKey) {
-                payload.new_key = newKeyVal;
-            }
-
-            const res = await apiCall(`/api/v1/admin/keys/${originalClientKey}`, 'PUT', payload);
-            if (res) {
-                closeKeyDrawer();
-                quickNotify('密钥配置与网关限流策略已更新');
-                await loadAllData();
-            }
-        }
-
-        async function deleteClientKey(token) {
-            if (!confirm(`确定要彻底注销此客户端 API Key 吗？\\n此操作不可逆，下游系统将立即无法访问！`)) return;
-            const res = await apiCall(`/api/v1/admin/keys/${token}`, 'DELETE');
-            if (res) {
-                quickNotify('客户端 API Key 已注销');
-                await loadAllData();
-            }
-        }
-
-        // --- Channel Key & Schedule Operations ---
-        function openAddChannelKeyModal(defaultChannel = 'hefeng') {
-            const modal = document.getElementById('addChannelKeyModal');
-            if (modal) {
-                const sel = document.getElementById('newChannelSelect');
-                if (sel) sel.value = defaultChannel;
-                document.getElementById('newChannelKeyInput').value = '';
-                document.getElementById('newChannelLimitInput').value = '2000';
-                document.getElementById('newChannelDescInput').value = '';
-                modal.style.display = 'flex';
-                document.getElementById('newChannelKeyInput').focus();
-            }
-        }
-
-        function closeChannelModal() {
-            const modal = document.getElementById('addChannelKeyModal');
-            if (modal) modal.style.display = 'none';
-        }
-
-        async function submitChannelKey() {
-            const chSel = document.getElementById('newChannelSelect');
-            const channelId = chSel.value;
-            const keyVal = document.getElementById('newChannelKeyInput').value.trim();
-            const limit = parseInt(document.getElementById('newChannelLimitInput').value) || 2000;
-            const desc = document.getElementById('newChannelDescInput').value.trim();
-
-            if (!keyVal) {
-                quickNotify('请输入渠道 API Key', true);
-                return;
-            }
-
-            const res = await apiCall(`/api/v1/admin/channels/${channelId}/keys`, 'POST', {
-                key: keyVal,
-                daily_limit: limit,
-                desc: desc
-            });
-
-            if (res) {
-                closeChannelModal();
-                quickNotify(`已为 [${channelId}] 注入新 API Key，并加入健康轮询池`);
-                await loadAllData();
-            }
-        }
-
-        async function deleteChannelKey(channelId, key) {
-            if (!confirm(`确定要从渠道 [${channelId}] 轮询池中移除该 Key 吗？`)) return;
-            const res = await apiCall(`/api/v1/admin/channels/${channelId}/keys`, 'DELETE', { key });
-            if (res) {
-                quickNotify('渠道 Key 已从轮询池注销');
-                await loadAllData();
-            }
-        }
-
-        async function toggleChannelKeyActive(checkbox, channelId, key) {
-            const newStatus = checkbox.checked ? 'active' : 'disabled';
-            const statusText = checkbox.closest('td').querySelector('.key-status-text');
-            
-            const res = await apiCall(`/api/v1/admin/channels/${channelId}/keys/status`, 'PUT', {
-                key: key,
-                status: newStatus
-            });
-
-            if (res) {
-                if (statusText) {
-                    statusText.textContent = checkbox.checked ? '轮询中' : '已禁用';
-                    statusText.style.color = checkbox.checked ? 'var(--accent-emerald)' : 'var(--text-muted)';
-                }
-                quickNotify(`渠道 Key 状态已更新为 [${newStatus}]`);
-            } else {
-                checkbox.checked = !checkbox.checked;
-            }
-        }
-
-        async function triggerManualUpdate(channelId) {
-            const res = await apiCall(`/api/v1/admin/channels/${channelId}/update`, 'POST');
-            if (res) {
-                quickNotify(`已触发渠道 [${channelId}] 异步全量抓取更新任务`);
-            }
-        }
-
-        // --- Celery Scheduler Modal & Operations ---
-        let currentSchedChannelId = 'yiketianqi';
-        let currentSchedChannelName = 'YIKETIANQI';
-
-        function handleSchedModalToggleChange(isActive) {
-            const badge = document.getElementById('channelSchedModalActiveStatus');
-            if (!badge) return;
-            if (isActive) {
-                badge.className = 'status-badge status-healthy';
-                badge.innerHTML = '<span class="status-dot"></span> 运行中';
-            } else {
-                badge.className = 'status-badge status-warning';
-                badge.innerHTML = '<span class="status-dot" style="background: #f43f5e;"></span> 已暂停';
-            }
-        }
-
-        function getHumanReadableCron(rule) {
-            const parts = rule.trim().split(/\\s+/);
-            if (parts.length !== 5) return '';
-            const [min, hour, dom, mon, dow] = parts;
-            if (min === '*/15' && hour === '*' && dom === '*' && mon === '*' && dow === '*') return '每 15 分钟';
-            if (min === '*/30' && hour === '*' && dom === '*' && mon === '*' && dow === '*') return '每 30 分钟';
-            if (min === '0' && hour === '*' && dom === '*' && mon === '*' && dow === '*') return '每小时整点';
-            if (min.startsWith('*/') && hour === '*' && dom === '*' && mon === '*' && dow === '*') return `每 ${min.replace('*/', '')} 分钟`;
-            if (dom === '*' && mon === '*' && dow === '*') {
-                const pad = n => n.length === 1 ? '0' + n : n;
-                if (/^\\d+$/.test(min) && /^\\d+$/.test(hour)) {
-                    return `每天 ${pad(hour)}:${pad(min)}`;
-                }
-            }
-            return '';
-        }
-
-        function updateCronRulePreview(cronStr) {
-            const container = document.getElementById('channelSchedRulePills');
-            const countBadge = document.getElementById('channelSchedRuleCountBadge');
-            if (!container) return;
-            container.innerHTML = '';
-            if (!cronStr || !cronStr.trim()) {
-                container.innerHTML = '<span style="font-size: 11px; color: var(--text-muted);">暂无配置任何调度规则</span>';
-                if (countBadge) countBadge.textContent = '已解析 0 条';
-                return;
-            }
-            const rules = cronStr.split(/[\\n,]+/).map(s => s.trim()).filter(Boolean);
-            if (countBadge) countBadge.textContent = `已解析 ${rules.length} 条`;
-
-            rules.forEach((rule, idx) => {
-                const tag = document.createElement('div');
-                tag.className = 'cron-rule-tag';
-                const humanDesc = getHumanReadableCron(rule);
-                let humanHtml = '';
-                if (humanDesc) {
-                    humanHtml = `<span class="rule-human-time">${humanDesc}</span>`;
-                }
-                tag.innerHTML = `<span style="color: var(--text-muted); font-size: 10px;">#${idx+1}</span><span>${rule}</span>${humanHtml}`;
-                container.appendChild(tag);
-            });
-        }
-
-        function openChannelScheduleModal(channelId, channelName, defaultRules, isActive, delay) {
-            currentSchedChannelId = channelId;
-            currentSchedChannelName = channelName;
-
-            // Find latest channel config from appState if available
-            const foundCh = appState.channels.find(c => c._id === channelId);
-            let finalRules = defaultRules;
-            let finalActive = isActive;
-            let finalDelay = delay;
-
-            if (foundCh) {
-                finalRules = foundCh.cron || defaultRules;
-                finalActive = foundCh.is_active !== false;
-                finalDelay = foundCh.wait_max || delay || 10;
-            }
-
-            const badgeEl = document.getElementById('channelSchedModalBadge');
-            if (badgeEl) badgeEl.textContent = channelName.toUpperCase();
-
-            const toggle = document.getElementById('channelSchedActiveToggle');
-            if (toggle) {
-                toggle.checked = finalActive;
-                handleSchedModalToggleChange(finalActive);
-            }
-
-            let formattedRules = '';
-            if (Array.isArray(finalRules)) {
-                formattedRules = finalRules.join(',\\n');
-            } else if (typeof finalRules === 'string') {
-                formattedRules = finalRules.split(/[\\n,]+/).map(s => s.trim()).filter(Boolean).join(',\\n');
-            }
-
-            document.getElementById('channelSchedCronInput').value = formattedRules;
-            document.getElementById('channelSchedDelayInput').value = finalDelay || 10;
-            document.getElementById('channelSchedDelayLabel').textContent = (finalDelay || 10) + ' 秒';
-            updateCronRulePreview(formattedRules);
-            document.getElementById('channelScheduleModal').style.display = 'flex';
-            lucide.createIcons();
-        }
-
-        function closeChannelScheduleModal() {
-            document.getElementById('channelScheduleModal').style.display = 'none';
-        }
-
-        function appendChannelCronPreset(presetCron) {
-            const input = document.getElementById('channelSchedCronInput');
-            let current = input.value.trim();
-            if (current) {
-                current += ',\\n' + presetCron;
-            } else {
-                current = presetCron;
-            }
-            input.value = current;
-            updateCronRulePreview(current);
-            quickNotify(`已添加预设规则: ${presetCron}`);
-        }
-
-        async function saveChannelScheduleModal() {
-            const input = document.getElementById('channelSchedCronInput');
-            const isActive = document.getElementById('channelSchedActiveToggle').checked;
-            const delay = parseInt(document.getElementById('channelSchedDelayInput').value) || 10;
-            const rules = input.value.split(/[\\n,]+/).map(s => s.trim()).filter(Boolean);
-
-            const cronPayload = rules.join(',');
-
-            const res = await apiCall(`/api/v1/admin/channels/${currentSchedChannelId}/schedule`, 'PUT', {
-                cron: cronPayload,
-                is_active: isActive,
-                wait_max: delay
-            });
-
-            if (res) {
-                closeChannelScheduleModal();
-                quickNotify(`已保存 [${currentSchedChannelName}] 调度规则 (${rules.length} 条)，Celery Beat 已热重载`);
-                await loadAllData();
-            }
-        }
-
-        async function toggleChannelSchedActive(channelId, checkbox) {
-            const res = await apiCall(`/api/v1/admin/channels/${channelId}/schedule`, 'PUT', {
-                is_active: checkbox.checked
-            });
-            if (res) {
-                quickNotify(`渠道 [${channelId}] Celery 定时采集已${checkbox.checked ? '开启' : '暂停'}`);
-                await loadAllData();
-            } else {
-                checkbox.checked = !checkbox.checked;
-            }
-        }
-
-        // --- Playground Request Builder ---
-        let playRouteMode = 'path';
-        let currentPlayCity = '上海';
-
-        function handlePlayKeyChange(val) {
-            const customInput = document.getElementById('playKeyCustomInput');
-            if (val === 'custom') {
-                customInput.style.display = 'block';
-                customInput.focus();
-            } else {
-                customInput.style.display = 'none';
-            }
-            quickNotify('已切换沙盒 Header: X-API-Key 凭证');
-        }
-
-        function filterPlaygroundCities(query) {
-            const q = query.trim().toLowerCase();
-            const chips = document.querySelectorAll('#playgroundCityChips .city-chip-btn');
-            chips.forEach(chip => {
-                const city = chip.getAttribute('data-city').toLowerCase();
-                const pinyin = chip.getAttribute('data-pinyin').toLowerCase();
-                if (!q || city.includes(q) || pinyin.includes(q)) {
-                    chip.style.display = 'inline-block';
-                } else {
-                    chip.style.display = 'none';
-                }
-            });
-        }
-
-        function selectPlayCity(city, btn) {
-            currentPlayCity = city;
-            document.querySelectorAll('#playgroundCityChips .city-chip-btn').forEach(b => b.classList.remove('active'));
-            if (btn) btn.classList.add('active');
-            updatePlayRoute();
-            quickNotify(`已填入预设城市: ${city}`);
-        }
-
-        function switchRouteParamMode(mode) {
-            playRouteMode = mode;
-            const pathBtn = document.getElementById('routeModePathBtn');
-            const queryBtn = document.getElementById('routeModeQueryBtn');
-            if (mode === 'path') {
-                pathBtn.style.background = 'rgba(59,130,246,0.15)';
-                pathBtn.style.color = 'var(--accent-cyan)';
-                queryBtn.style.background = 'transparent';
-                queryBtn.style.color = 'var(--text-secondary)';
-            } else {
-                queryBtn.style.background = 'rgba(59,130,246,0.15)';
-                queryBtn.style.color = 'var(--accent-cyan)';
-                pathBtn.style.background = 'transparent';
-                pathBtn.style.color = 'var(--text-secondary)';
-            }
-            updatePlayRoute();
-        }
-
-        function updatePlayRoute() {
-            const routeInput = document.getElementById('playRouteInput');
-            if (playRouteMode === 'path') {
-                routeInput.value = `/api/v1/weather/${currentPlayCity}`;
-            } else {
-                routeInput.value = `/api/v1/weather?city=${currentPlayCity}`;
-            }
-        }
-
-        async function executePlaygroundRequest() {
-            const routeInput = document.getElementById('playRouteInput');
-            const keySelect = document.getElementById('playKeySelect');
-            let apiKey = keySelect.value;
-            if (apiKey === 'custom') {
-                apiKey = document.getElementById('playKeyCustomInput').value.trim();
-            }
-
-            const latencyTag = document.getElementById('playLatencyTag');
-            const viewer = document.getElementById('playgroundJsonViewer');
-
-            if (!apiKey) {
-                quickNotify('请选择或输入有效的 X-API-Key', true);
-                return;
-            }
-
-            latencyTag.textContent = '请求中...';
-            latencyTag.style.color = 'var(--accent-amber)';
-
-            const startTime = performance.now();
-            try {
-                const res = await fetch(routeInput.value, {
-                    headers: { 'X-API-Key': apiKey }
-                });
-                const endTime = performance.now();
-                const latency = Math.round(endTime - startTime);
-
-                const data = await res.json();
-                viewer.textContent = JSON.stringify(data, null, 2);
-
-                if (res.ok) {
-                    latencyTag.textContent = `${res.status} OK · ${latency}ms`;
-                    latencyTag.style.color = 'var(--accent-emerald)';
-                    quickNotify(`沙盒联调成功: ${latency}ms 返回气象报文`);
-                } else {
-                    latencyTag.textContent = `${res.status} ${res.statusText} · ${latency}ms`;
-                    latencyTag.style.color = 'var(--accent-rose)';
-                    quickNotify(`请求失败: ${data.detail || res.statusText}`, true);
-                }
-            } catch (err) {
-                const endTime = performance.now();
-                const latency = Math.round(endTime - startTime);
-                latencyTag.textContent = `网络错误 · ${latency}ms`;
-                latencyTag.style.color = 'var(--accent-rose)';
-                viewer.textContent = JSON.stringify({ error: err.message }, null, 2);
-                quickNotify('网络连接中断或跨域错误', true);
-            }
-        }
-
-        // --- Insights Cross-Check Tab (Canvas & City Filter) ---
-        let currentActiveCity = '北京';
-
+        // City Selection in Insights
         function selectInsightCity(cityName, adcode, btn) {
             currentActiveCity = cityName;
             document.querySelectorAll('.city-pick-item').forEach(b => b.classList.remove('active'));
-            if (btn) btn.classList.add('active');
+            btn.classList.add('active');
 
-            const data = weatherDatabase[cityName] || weatherDatabase['北京'];
+            const data = weatherDatabase[cityName];
             document.getElementById('currentCityTag').textContent = `${cityName}市 (${data.code}) · 今日融合实况`;
             document.getElementById('detailNowTemp').textContent = data.temp;
             document.getElementById('detailNowCond').querySelector('span').textContent = data.cond;
@@ -3837,7 +2874,6 @@
 
         function renderTableBody(tableRows) {
             const tbody = document.getElementById('comparisonTableBody');
-            if (!tbody) return;
             tbody.innerHTML = '';
             tableRows.forEach(row => {
                 const tr = document.createElement('tr');
@@ -3852,6 +2888,7 @@
             });
         }
 
+        // Canvas Temperature Comparison Chart
         function renderCompareChart() {
             const canvas = document.getElementById('weatherCompareChart');
             if (!canvas) return;
@@ -3869,7 +2906,7 @@
 
             ctx.clearRect(0, 0, w, h);
 
-            const data = weatherDatabase[currentActiveCity] || weatherDatabase['北京'];
+            const data = weatherDatabase[currentActiveCity];
             const allTemps = [...data.hfTemps, ...data.bdTemps, ...data.ykTemps];
             const minT = Math.min(...allTemps) - 2;
             const maxT = Math.max(...allTemps) + 2;
@@ -3936,6 +2973,15 @@
             drawLine(data.ykTemps, '#f59e0b');
         }
 
+        window.addEventListener('resize', () => {
+            renderCompareChart();
+        });
+
+        // Initialize table
+        renderTableBody(weatherDatabase['北京'].table);
+        setTimeout(renderCompareChart, 100);
+
+        // Filter Cities
         function filterCityList(query) {
             const q = query.trim().toLowerCase();
             const items = document.querySelectorAll('.city-pick-item');
@@ -3949,13 +2995,368 @@
             quickNotify(`已强制唤起 Fetcher 并行拉取 ${currentActiveCity} 最新三方报文`);
         }
 
-        // Global manual refresh
-        function manualGlobalRefresh() {
-            quickNotify('所有网关状态、Redis 缓存与渠道连接已刷新');
-            loadAllData();
+        // Drawer Logic (Client Key)
+        function openKeyDrawer(name, token, qpm, ips, ipEnabled) {
+            document.getElementById('drawerHeading').textContent = `编辑密钥: ${name}`;
+            document.getElementById('drawerKeyName').value = name;
+            document.getElementById('drawerKeyValue').value = token;
+            document.getElementById('drawerKeyQpm').value = qpm;
+            document.getElementById('drawerKeyIps').value = ips;
+            document.getElementById('drawerKeyIpEnabled').checked = ipEnabled;
+            document.getElementById('clientKeyDrawer').style.display = 'flex';
+            lucide.createIcons();
         }
 
-        // --- Command Palette (Cmd+K) ---
+        function closeKeyDrawer() {
+            document.getElementById('clientKeyDrawer').style.display = 'none';
+        }
+
+        function saveKeyDrawer() {
+            closeKeyDrawer();
+            quickNotify('密钥配置与 IP 白名单已保存，全局网关秒级生效');
+        }
+
+        // Toggle Channel Key Active (Switch)
+        function toggleChannelKeyActive(checkbox, keyName) {
+            const statusText = checkbox.closest('td').querySelector('.key-status-text');
+            if (checkbox.checked) {
+                statusText.textContent = '轮询中';
+                statusText.style.color = 'var(--accent-emerald)';
+                quickNotify(`渠道 Key [${keyName}] 已重新启用，并加入轮询队列`);
+            } else {
+                statusText.textContent = '已禁用';
+                statusText.style.color = 'var(--text-muted)';
+                quickNotify(`渠道 Key [${keyName}] 已停用，已安全移出轮询`);
+            }
+        }
+
+        // Channel Scheduler Modal Logic (Matches User Screenshot 2)
+        let currentSchedChannelId = 'yiketianqi';
+        let currentSchedChannelName = 'YIKETIANQI';
+
+        function handleSchedModalToggleChange(isActive) {
+            const badge = document.getElementById('channelSchedModalActiveStatus');
+            if (!badge) return;
+            if (isActive) {
+                badge.className = 'status-badge status-healthy';
+                badge.innerHTML = '<span class="status-dot"></span> 运行中';
+            } else {
+                badge.className = 'status-badge status-warning';
+                badge.innerHTML = '<span class="status-dot" style="background: #f43f5e;"></span> 已暂停';
+            }
+        }
+
+        function getHumanReadableCron(rule) {
+            const parts = rule.trim().split(/\s+/);
+            if (parts.length !== 5) return '';
+            const [min, hour, dom, mon, dow] = parts;
+            if (min === '*/15' && hour === '*' && dom === '*' && mon === '*' && dow === '*') return '每 15 分钟';
+            if (min === '*/30' && hour === '*' && dom === '*' && mon === '*' && dow === '*') return '每 30 分钟';
+            if (min === '0' && hour === '*' && dom === '*' && mon === '*' && dow === '*') return '每小时整点';
+            if (min.startsWith('*/') && hour === '*' && dom === '*' && mon === '*' && dow === '*') return `每 ${min.replace('*/', '')} 分钟`;
+            if (dom === '*' && mon === '*' && dow === '*') {
+                const pad = n => n.length === 1 ? '0' + n : n;
+                if (/^\d+$/.test(min) && /^\d+$/.test(hour)) {
+                    return `每天 ${pad(hour)}:${pad(min)}`;
+                }
+            }
+            return '';
+        }
+
+        function openChannelScheduleModal(channelId, channelName, cronRules, isActive, delay) {
+            currentSchedChannelId = channelId;
+            currentSchedChannelName = channelName;
+            
+            const badgeEl = document.getElementById('channelSchedModalBadge');
+            if (badgeEl) badgeEl.textContent = channelName.toUpperCase();
+
+            const toggle = document.getElementById('channelSchedActiveToggle');
+            if (toggle) {
+                toggle.checked = isActive;
+                handleSchedModalToggleChange(isActive);
+            }
+            
+            // 格式化为每行一条规则，展示更清晰整洁
+            let formattedRules = cronRules || '';
+            if (formattedRules.includes(',')) {
+                formattedRules = formattedRules.split(',').map(s => s.trim()).filter(Boolean).join(',\n');
+            }
+            document.getElementById('channelSchedCronInput').value = formattedRules;
+            document.getElementById('channelSchedDelayInput').value = delay || 10;
+            document.getElementById('channelSchedDelayLabel').textContent = (delay || 10) + ' 秒';
+            updateCronRulePreview(formattedRules);
+            document.getElementById('channelScheduleModal').style.display = 'flex';
+            lucide.createIcons();
+        }
+
+        function closeChannelScheduleModal() {
+            document.getElementById('channelScheduleModal').style.display = 'none';
+        }
+
+        function appendChannelCronPreset(presetCron) {
+            const input = document.getElementById('channelSchedCronInput');
+            let val = input.value.trim();
+            if (!val) {
+                input.value = presetCron;
+            } else {
+                const rules = val.split(/[,\n]+/).map(s => s.trim()).filter(Boolean);
+                if (!rules.includes(presetCron)) {
+                    input.value = val + ',\n' + presetCron;
+                }
+            }
+            updateCronRulePreview(input.value);
+        }
+
+        function updateCronRulePreview(cronStr) {
+            const container = document.getElementById('channelSchedRulePills');
+            const countBadge = document.getElementById('channelSchedRuleCountBadge');
+            if (!container) return;
+            container.innerHTML = '';
+            if (!cronStr || !cronStr.trim()) {
+                container.innerHTML = '<span style="font-size: 11px; color: var(--text-muted);">暂无配置任何调度规则</span>';
+                if (countBadge) countBadge.textContent = '已解析 0 条';
+                return;
+            }
+            const rules = cronStr.split(/[,\n]+/).map(s => s.trim()).filter(Boolean);
+            if (countBadge) countBadge.textContent = `已解析 ${rules.length} 条`;
+
+            rules.forEach((rule, idx) => {
+                const tag = document.createElement('div');
+                tag.className = 'cron-rule-tag';
+                const humanDesc = getHumanReadableCron(rule);
+                let humanHtml = '';
+                if (humanDesc) {
+                    humanHtml = `<span class="rule-human-time">${humanDesc}</span>`;
+                }
+                tag.innerHTML = `<span style="color: var(--text-muted); font-size: 10px;">#${idx+1}</span><span>${rule}</span>${humanHtml}`;
+                container.appendChild(tag);
+            });
+        }
+
+        function saveChannelScheduleModal() {
+            const input = document.getElementById('channelSchedCronInput');
+            const isActive = document.getElementById('channelSchedActiveToggle').checked;
+            const rules = input.value.split(/[,\n]+/).map(s => s.trim()).filter(Boolean);
+
+            if (currentSchedChannelId === 'hefeng') {
+                document.getElementById('schedActiveHefeng').checked = isActive;
+                document.getElementById('hefengCronCount').textContent = rules.length + ' 条';
+                renderCronPills('hefengCronList', rules);
+            } else if (currentSchedChannelId === 'baidu') {
+                document.getElementById('schedActiveBaidu').checked = isActive;
+                document.getElementById('baiduCronCount').textContent = rules.length + ' 条';
+                renderCronPills('baiduCronList', rules);
+            } else if (currentSchedChannelId === 'yiketianqi') {
+                document.getElementById('schedActiveYike').checked = isActive;
+                document.getElementById('yikeCronCount').textContent = rules.length + ' 条';
+                renderCronPills('yikeCronList', rules);
+            }
+
+            closeChannelScheduleModal();
+            quickNotify(`已保存 [${currentSchedChannelName}] 定时规则 (${rules.length} 条)，Celery Beat 热重载生效`);
+        }
+
+        function renderCronPills(containerId, rules) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            container.innerHTML = '';
+            rules.slice(0, 6).forEach(rule => {
+                const item = document.createElement('div');
+                item.className = 'sched-cron-badge-item';
+                item.innerHTML = `<span>${rule}</span><span style="color: var(--text-muted); font-size: 10px;">定时规则</span>`;
+                container.appendChild(item);
+            });
+        }
+
+        function toggleChannelSchedActive(channelId, checkbox) {
+            quickNotify(`渠道 [${channelId}] Celery 定时采集已${checkbox.checked ? '开启' : '关闭'}`);
+        }
+
+        // Modals Logic
+        function openAddChannelKeyModal() {
+            document.getElementById('addChannelKeyModal').style.display = 'flex';
+        }
+        function closeChannelModal() {
+            document.getElementById('addChannelKeyModal').style.display = 'none';
+        }
+        function submitChannelKey() {
+            closeChannelModal();
+            quickNotify('新渠道 API Key 已加入轮询池，状态：健康');
+        }
+
+        function openAddClientModal() {
+            document.getElementById('addClientKeyModal').style.display = 'flex';
+        }
+        function closeAddClientModal() {
+            document.getElementById('addClientKeyModal').style.display = 'none';
+        }
+        function submitNewClientKey() {
+            const name = document.getElementById('newClientNameInput').value || '新集成应用';
+            const qpm = document.getElementById('newClientQpmInput').value || 60;
+            const newKey = 'ck_' + Math.random().toString(36).substring(2, 12);
+            
+            const tbody = document.getElementById('clientKeysTableBody');
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td style="font-weight: 600; color: #fff;">${name}</td>
+                <td><span class="token-mono">${newKey}</span></td>
+                <td>${qpm} req/min</td>
+                <td><span style="color: var(--text-muted);">未绑定 IP</span></td>
+                <td><span style="font-family: var(--font-mono); font-weight: 700; color: var(--accent-cyan); font-size: 13px;">0 次</span></td>
+                <td><span style="font-family: var(--font-mono); font-weight: 600; color: #fff;">0 次</span></td>
+                <td>
+                    <button class="btn-zinc" onclick="openKeyDrawer('${name}', '${newKey}', ${qpm}, '', false)">
+                        <i data-lucide="sliders" style="width: 12px; height: 12px;"></i>
+                        编辑配置
+                    </button>
+                </td>
+            `;
+            tbody.prepend(tr);
+            lucide.createIcons();
+            closeAddClientModal();
+            quickNotify(`已为应用 [${name}] 生成专属客户端 Key: ${newKey}`);
+        }
+
+        function deleteChannelKeyMock(btn) {
+            if (confirm('确定要从轮询池中移除该 Key 吗？')) {
+                btn.closest('tr').remove();
+                quickNotify('渠道 Key 已从轮询池注销');
+            }
+        }
+
+        // Playground Request Builder Enhancements
+        let playRouteMode = 'path'; // 'path' or 'query'
+        let currentPlayCity = '上海';
+
+        function handlePlayKeyChange(val) {
+            const customInput = document.getElementById('playKeyCustomInput');
+            if (val === 'custom') {
+                customInput.style.display = 'block';
+                customInput.focus();
+            } else {
+                customInput.style.display = 'none';
+            }
+            quickNotify('已切换沙盒鉴权 Header: X-API-Key 凭证');
+        }
+
+        function filterPlaygroundCities(query) {
+            const q = query.trim().toLowerCase();
+            const chips = document.querySelectorAll('#playgroundCityChips .city-chip-btn');
+            chips.forEach(chip => {
+                const city = chip.getAttribute('data-city').toLowerCase();
+                const pinyin = chip.getAttribute('data-pinyin').toLowerCase();
+                if (!q || city.includes(q) || pinyin.includes(q)) {
+                    chip.style.display = 'inline-block';
+                } else {
+                    chip.style.display = 'none';
+                }
+            });
+        }
+
+        function selectPlayCity(city, btn) {
+            currentPlayCity = city;
+            document.querySelectorAll('#playgroundCityChips .city-chip-btn').forEach(b => b.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+            updatePlayRoute();
+            updatePlaygroundResponse(city);
+            quickNotify(`已填入城市预设: ${city}`);
+        }
+
+        function switchRouteParamMode(mode) {
+            playRouteMode = mode;
+            const pathBtn = document.getElementById('routeModePathBtn');
+            const queryBtn = document.getElementById('routeModeQueryBtn');
+            if (mode === 'path') {
+                pathBtn.style.background = 'rgba(59,130,246,0.15)';
+                pathBtn.style.color = 'var(--accent-cyan)';
+                queryBtn.style.background = 'transparent';
+                queryBtn.style.color = 'var(--text-secondary)';
+            } else {
+                queryBtn.style.background = 'rgba(59,130,246,0.15)';
+                queryBtn.style.color = 'var(--accent-cyan)';
+                pathBtn.style.background = 'transparent';
+                pathBtn.style.color = 'var(--text-secondary)';
+            }
+            updatePlayRoute();
+        }
+
+        function updatePlayRoute() {
+            const routeInput = document.getElementById('playRouteInput');
+            if (playRouteMode === 'path') {
+                routeInput.value = `/api/v1/weather/${currentPlayCity}`;
+            } else {
+                routeInput.value = `/api/v1/weather?city=${currentPlayCity}`;
+            }
+        }
+
+        function updatePlaygroundResponse(cityName) {
+            const city = cityName || currentPlayCity || '上海';
+            const cityCodes = {
+                '北京': '110000', '上海': '310000', '广州': '440100', '深圳': '440300',
+                '杭州': '330100', '成都': '510100', '武汉': '420100', '南京': '320100',
+                '重庆': '500000', '西安': '610100', '天津': '120000', '苏州': '320500'
+            };
+            const code = cityCodes[city] || '330100';
+            const mockJson = {
+                "_id": code,
+                "city_name": city,
+                "last_updated_at": "2026-09-19T05:45:00+08:00",
+                "sources": {
+                    "hefeng": [
+                        {
+                            "date": "2026-09-19",
+                            "temp_high": 27,
+                            "temp_low": 19,
+                            "weather_day": "多云",
+                            "weather_night": "阴",
+                            "humidity": 72,
+                            "wind_direction": "东风",
+                            "wind_scale": "2-3级",
+                            "aqi": 36,
+                            "aqi_level": "优"
+                        }
+                    ],
+                    "baidu": [
+                        {
+                            "date": "2026-09-19",
+                            "temp_high": 26,
+                            "temp_low": 18,
+                            "weather_day": "多云",
+                            "weather_night": "多云",
+                            "humidity": 70,
+                            "wind_direction": "东南风",
+                            "wind_scale": "3级"
+                        }
+                    ],
+                    "yiketianqi": [
+                        {
+                            "date": "2026-09-19",
+                            "temp_high": 28,
+                            "temp_low": 19,
+                            "weather_day": "晴间多云",
+                            "weather_night": "阴",
+                            "humidity": 68
+                        }
+                    ]
+                }
+            };
+            const viewer = document.getElementById('playgroundJsonViewer');
+            if (viewer) {
+                viewer.textContent = JSON.stringify(mockJson, null, 2);
+            }
+        }
+
+        function executePlaygroundRequest() {
+            const latencyTag = document.getElementById('playLatencyTag');
+            latencyTag.textContent = '请求中...';
+            setTimeout(() => {
+                latencyTag.textContent = '200 OK · 58ms (Redis Cache Hit)';
+                updatePlaygroundResponse(currentPlayCity);
+                quickNotify(`沙盒测试完成: [${currentPlayCity}] 聚合天气报文已返回`);
+            }, 200);
+        }
+
+        // Command Palette (Cmd+K)
         function openCmdPalette() {
             document.getElementById('cmdPalette').style.display = 'flex';
             document.getElementById('cmdInputBox').focus();
@@ -4008,45 +3409,23 @@
             });
         }
 
-        // Copy utility
-        function copyToClipboard(text) {
-            navigator.clipboard.writeText(text).then(() => {
-                quickNotify('密钥凭据已成功复制到剪贴板');
-            }).catch(() => {
-                prompt('请手动复制:', text);
-            });
+        function manualGlobalRefresh() {
+            quickNotify('所有网关状态、Redis 缓存与渠道连接已刷新');
         }
 
-        window.addEventListener('resize', () => {
-            if (appState.currentTab === 'insights') renderCompareChart();
-        });
-
-        // --- App Bootstrapping ---
-        document.addEventListener('DOMContentLoaded', async () => {
-            const key = localStorage.getItem('adminKey');
-            if (!key) {
-                showLoginModal();
-            } else {
-                try {
-                    const res = await fetch('/api/v1/admin/login', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ key })
-                    });
-                    if (res.ok) {
-                        hideLoginModal();
-                        await loadAllData();
-                    } else {
-                        showLoginModal();
-                    }
-                } catch(e) {
-                    showLoginModal();
-                }
+        function simulateLogout() {
+            if (confirm('确定要退出管理控制台吗？')) {
+                quickNotify('已安全退出会话');
             }
+        }
 
-            renderTableBody(weatherDatabase['北京'].table);
-            setTimeout(renderCompareChart, 100);
-        });
+        // Toast Helper
+        function quickNotify(msg) {
+            const toast = document.getElementById('toastWidget');
+            document.getElementById('toastContent').textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2800);
+        }
     </script>
 </body>
 </html>

@@ -1,0 +1,1480 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>方案 A: AtmoSphere Bento - 气象监控大屏与数字孪生控制台</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --bg-base: #060913;
+            --bg-surface: rgba(15, 23, 42, 0.7);
+            --bg-surface-hover: rgba(30, 41, 59, 0.8);
+            --border-glow: rgba(56, 189, 248, 0.2);
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --text-faint: #64748b;
+            --accent-cyan: #38bdf8;
+            --accent-indigo: #818cf8;
+            --accent-emerald: #34d399;
+            --accent-amber: #fbbf24;
+            --accent-rose: #f43f5e;
+            --hefeng-color: #38bdf8;
+            --baidu-color: #34d399;
+            --yike-color: #f59e0b;
+            --radius-lg: 20px;
+            --radius-md: 12px;
+            --radius-sm: 8px;
+            --font-display: 'Space Grotesk', sans-serif;
+            --font-body: 'Plus Jakarta Sans', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            font-family: var(--font-body);
+            min-height: 100vh;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(ellipse 80% 50% at 50% -20%, rgba(56, 189, 248, 0.15), transparent 70%),
+                radial-gradient(ellipse 50% 50% at 100% 100%, rgba(129, 140, 248, 0.1), transparent 70%),
+                linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px;
+        }
+
+        /* Top Nav Hub Switcher Link */
+        .preview-banner {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-subtle);
+            padding: 8px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 13px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .preview-banner a {
+            color: var(--accent-cyan);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 500;
+            transition: opacity 0.2s;
+        }
+        .preview-banner a:hover {
+            opacity: 0.8;
+        }
+        .scheme-switcher {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .scheme-tag {
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .scheme-tag.active {
+            background: var(--accent-cyan);
+            color: #04101e;
+        }
+        .scheme-tag.inactive {
+            background: rgba(255, 255, 255, 0.06);
+            color: var(--text-muted);
+            border: 1px solid var(--border-subtle);
+        }
+        .scheme-tag.inactive:hover {
+            background: rgba(255, 255, 255, 0.12);
+            color: var(--text-main);
+        }
+
+        /* Layout Container */
+        .container {
+            max-width: 1540px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        .brand-group {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .brand-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(129, 140, 248, 0.2));
+            border: 1px solid var(--border-glow);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-cyan);
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.2);
+        }
+        .brand-title {
+            font-family: var(--font-display);
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .brand-badge {
+            font-size: 11px;
+            padding: 2px 8px;
+            background: rgba(56, 189, 248, 0.15);
+            color: var(--accent-cyan);
+            border: 1px solid var(--border-glow);
+            border-radius: 999px;
+            font-family: var(--font-mono);
+        }
+        .brand-desc {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .header-status-bar {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            background: var(--bg-surface);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border-subtle);
+            padding: 8px 18px;
+            border-radius: 999px;
+            font-size: 13px;
+        }
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent-emerald);
+            box-shadow: 0 0 10px var(--accent-emerald);
+            animation: pulse-dot 2s infinite;
+        }
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.85); }
+        }
+        .stat-divider {
+            width: 1px;
+            height: 16px;
+            background: var(--border-subtle);
+        }
+        .time-display {
+            font-family: var(--font-mono);
+            font-weight: 600;
+            color: var(--accent-cyan);
+        }
+
+        /* Bento Grid System */
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 20px;
+        }
+
+        .bento-card {
+            background: var(--bg-surface);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: 22px;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+        }
+        .bento-card:hover {
+            border-color: rgba(56, 189, 248, 0.35);
+            box-shadow: 0 12px 36px -8px rgba(0, 0, 0, 0.6), 0 0 20px -2px rgba(56, 189, 248, 0.15);
+        }
+        .bento-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 10% 10%, rgba(255, 255, 255, 0.03), transparent 60%);
+            pointer-events: none;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px;
+        }
+        .card-title-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .card-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: var(--radius-sm);
+            background: rgba(255, 255, 255, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-cyan);
+            border: 1px solid var(--border-subtle);
+        }
+        .card-title {
+            font-family: var(--font-display);
+            font-size: 16px;
+            font-weight: 600;
+            letter-spacing: -0.2px;
+        }
+        .card-subtitle {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* Specific Bento Placements */
+        /* Row 1: Key Metrics (12 cols) */
+        .metric-cards-group {
+            grid-column: span 12;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+        }
+        .metric-card {
+            background: var(--bg-surface);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 18px 20px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .metric-card:hover {
+            border-color: var(--border-glow);
+            transform: translateY(-2px);
+        }
+        .metric-info h4 {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+        .metric-value {
+            font-family: var(--font-mono);
+            font-size: 26px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+        .metric-trend {
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 4px;
+        }
+        .trend-up { color: var(--accent-emerald); }
+        .trend-stable { color: var(--accent-cyan); }
+        .metric-badge-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Hero Bento: Weather Multi-Source Matrix (8 cols) */
+        .hero-weather-bento {
+            grid-column: span 8;
+            min-height: 440px;
+            display: flex;
+            flex-direction: column;
+        }
+        .city-chips-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+        .city-chip {
+            padding: 6px 14px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-muted);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .city-chip:hover {
+            background: rgba(255, 255, 255, 0.09);
+            color: var(--text-main);
+        }
+        .city-chip.active {
+            background: rgba(56, 189, 248, 0.15);
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+            font-weight: 600;
+            box-shadow: 0 0 12px rgba(56, 189, 248, 0.25);
+        }
+
+        /* Weather Comparative View */
+        .weather-hero-content {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 20px;
+            flex: 1;
+            margin-top: 14px;
+        }
+        .realtime-fusion-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .city-now-temp {
+            font-family: var(--font-display);
+            font-size: 54px;
+            font-weight: 700;
+            line-height: 1;
+            margin: 12px 0 6px;
+            background: linear-gradient(135deg, #fff 40%, var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .city-now-condition {
+            font-size: 16px;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .source-tag-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 16px;
+        }
+        .source-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12px;
+            padding: 6px 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 6px;
+            border-left: 3px solid #ccc;
+        }
+        .source-row.hefeng { border-left-color: var(--hefeng-color); }
+        .source-row.baidu { border-left-color: var(--baidu-color); }
+        .source-row.yike { border-left-color: var(--yike-color); }
+
+        .chart-container-box {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        .chart-header-legend {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 12px;
+        }
+        .legend-items {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-muted);
+        }
+        .legend-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+        .canvas-wrapper {
+            flex: 1;
+            position: relative;
+            min-height: 220px;
+        }
+        canvas#tempChart {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* Channel Health & Watermark Bento (4 cols) */
+        .channel-health-bento {
+            grid-column: span 4;
+            min-height: 440px;
+            display: flex;
+            flex-direction: column;
+        }
+        .channel-watermark-list {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            flex: 1;
+            justify-content: space-around;
+        }
+        .channel-gauge-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 14px 16px;
+            transition: all 0.2s;
+        }
+        .channel-gauge-card:hover {
+            border-color: rgba(255, 255, 255, 0.18);
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .channel-top-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        .channel-brand-name {
+            font-weight: 600;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .progress-bar-bg {
+            height: 8px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 999px;
+            overflow: hidden;
+            position: relative;
+        }
+        .progress-fill {
+            height: 100%;
+            border-radius: 999px;
+            transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .channel-stats-sub {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 8px;
+            font-size: 11px;
+            color: var(--text-muted);
+            font-family: var(--font-mono);
+        }
+
+        /* Celery Beat Scheduler Bento (6 cols) */
+        .celery-scheduler-bento {
+            grid-column: span 6;
+        }
+        .scheduler-card-inner {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .cron-display-box {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 12px 16px;
+        }
+        .cron-code {
+            font-family: var(--font-mono);
+            font-size: 18px;
+            color: var(--accent-cyan);
+            font-weight: 600;
+            letter-spacing: 2px;
+        }
+        .hot-reload-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--accent-emerald);
+            background: rgba(52, 211, 153, 0.1);
+            padding: 4px 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(52, 211, 153, 0.3);
+        }
+        .preset-pills-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .preset-pill {
+            padding: 6px 12px;
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .preset-pill:hover, .preset-pill.active {
+            background: rgba(56, 189, 248, 0.15);
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+        }
+        .slider-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+        }
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            accent-color: var(--accent-cyan);
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 999px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        /* Client API Credentials Bento (6 cols) */
+        .client-keys-bento {
+            grid-column: span 6;
+        }
+        .client-keys-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: 280px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+        .client-key-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 12px 16px;
+            transition: all 0.2s;
+        }
+        .client-key-row:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+        .key-title-wrap {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .key-name-txt {
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .key-token-mono {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--text-faint);
+            background: rgba(0, 0, 0, 0.4);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        .key-tag-qpm {
+            font-size: 11px;
+            color: var(--accent-indigo);
+            border: 1px solid rgba(129, 140, 248, 0.3);
+            background: rgba(129, 140, 248, 0.1);
+            padding: 2px 8px;
+            border-radius: 999px;
+        }
+        .btn-action-sm {
+            background: transparent;
+            border: 1px solid var(--border-subtle);
+            color: var(--text-muted);
+            border-radius: var(--radius-sm);
+            padding: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .btn-action-sm:hover {
+            color: var(--text-main);
+            border-color: var(--accent-cyan);
+            background: rgba(56, 189, 248, 0.1);
+        }
+
+        /* Buttons & Controls */
+        .btn-primary {
+            background: linear-gradient(135deg, #0284c7, #0369a1);
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #0369a1, #075985);
+            box-shadow: 0 0 16px rgba(56, 189, 248, 0.5);
+            transform: translateY(-1px);
+        }
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-main);
+            padding: 8px 14px;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Toast notifications */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid var(--accent-cyan);
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: var(--radius-md);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(56, 189, 248, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            z-index: 1000;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            backdrop-filter: blur(12px);
+        }
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        /* Modal Overlay */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(3, 7, 18, 0.75);
+            backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+        }
+        .modal-box {
+            background: #0f172a;
+            border: 1px solid var(--border-glow);
+            border-radius: var(--radius-lg);
+            width: 100%;
+            max-width: 480px;
+            padding: 24px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(56, 189, 248, 0.2);
+        }
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 4px;
+        }
+        .modal-close:hover { color: #fff; }
+        .form-item {
+            margin-bottom: 16px;
+        }
+        .form-item label {
+            display: block;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+        .form-input {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border-subtle);
+            padding: 10px 14px;
+            border-radius: var(--radius-sm);
+            color: #fff;
+            font-family: inherit;
+            font-size: 13px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .form-input:focus {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+        }
+
+        @media (max-width: 1024px) {
+            .hero-weather-bento { grid-column: span 12; }
+            .channel-health-bento { grid-column: span 12; }
+            .celery-scheduler-bento { grid-column: span 12; }
+            .client-keys-bento { grid-column: span 12; }
+            .metric-cards-group { grid-template-columns: repeat(2, 1fr); }
+            .weather-hero-content { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 640px) {
+            .metric-cards-group { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Top Preview Navigator -->
+    <div class="preview-banner">
+        <a href="index.html">
+            <i data-lucide="layout-grid" style="width: 16px; height: 16px;"></i>
+            <span>返回方案对比中心 (Preview Hub)</span>
+        </a>
+        <div class="scheme-switcher">
+            <span style="color: var(--text-faint); margin-right: 4px;">方案预览：</span>
+            <a href="concept_a_bento.html" class="scheme-tag active">A. Bento 监控大屏</a>
+            <a href="concept_b_linear.html" class="scheme-tag inactive">B. Linear 极简工坊</a>
+            <a href="concept_c_clarity.html" class="scheme-tag inactive">C. 北欧明暗中枢</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="brand-group">
+                <div class="brand-icon">
+                    <i data-lucide="radar" style="width: 28px; height: 28px;"></i>
+                </div>
+                <div>
+                    <div class="brand-title">
+                        AtmoSphere Bento
+                        <span class="brand-badge">Cyber-Grid Edition</span>
+                    </div>
+                    <p class="brand-desc">气象多源异构聚合与自愈调度系统 · 运维控制中心</p>
+                </div>
+            </div>
+
+            <div class="header-status-bar">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <div class="status-dot"></div>
+                    <span style="color: var(--text-main); font-weight: 500;">所有渠道服务正常</span>
+                </div>
+                <div class="stat-divider"></div>
+                <div style="color: var(--text-muted);">
+                    QPM 脉冲: <span style="color: var(--accent-emerald); font-weight: 600; font-family: var(--font-mono);">342 req/min</span>
+                </div>
+                <div class="stat-divider"></div>
+                <div>
+                    统一时区: <span class="time-display" id="beijingClock">15:42:08 CST</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Bento Grid System -->
+        <div class="bento-grid">
+
+            <!-- Row 1: KPI Metrics -->
+            <div class="metric-cards-group">
+                <div class="metric-card">
+                    <div class="metric-info">
+                        <h4>今日聚合调用量</h4>
+                        <div class="metric-value" id="kpiCalls">48,290</div>
+                        <div class="metric-trend trend-up">
+                            <i data-lucide="trending-up" style="width: 14px; height: 14px;"></i>
+                            <span>较昨日同期 +12.4%</span>
+                        </div>
+                    </div>
+                    <div class="metric-badge-icon" style="background: rgba(56, 189, 248, 0.1); color: var(--accent-cyan);">
+                        <i data-lucide="activity" style="width: 22px; height: 22px;"></i>
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-info">
+                        <h4>活跃城市缓存覆盖</h4>
+                        <div class="metric-value">3,142 <span style="font-size: 14px; color: var(--text-faint);">座</span></div>
+                        <div class="metric-trend trend-stable">
+                            <i data-lucide="check-circle-2" style="width: 14px; height: 14px;"></i>
+                            <span>99.8% 命中率 (TTL 24h)</span>
+                        </div>
+                    </div>
+                    <div class="metric-badge-icon" style="background: rgba(52, 211, 153, 0.1); color: var(--accent-emerald);">
+                        <i data-lucide="map-pin" style="width: 22px; height: 22px;"></i>
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-info">
+                        <h4>多源渠道平均耗时</h4>
+                        <div class="metric-value">118 <span style="font-size: 14px; color: var(--text-faint);">ms</span></div>
+                        <div class="metric-trend trend-up">
+                            <i data-lucide="zap" style="width: 14px; height: 14px;"></i>
+                            <span>并发并行抓取优化</span>
+                        </div>
+                    </div>
+                    <div class="metric-badge-icon" style="background: rgba(251, 191, 36, 0.1); color: var(--accent-amber);">
+                        <i data-lucide="gauge" style="width: 22px; height: 22px;"></i>
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-info">
+                        <h4>Key 池健康水位</h4>
+                        <div class="metric-value">94.2 <span style="font-size: 14px; color: var(--text-faint);">%</span></div>
+                        <div class="metric-trend trend-stable">
+                            <i data-lucide="shield-check" style="width: 14px; height: 14px;"></i>
+                            <span>0 熔断 / 7 备用 Key</span>
+                        </div>
+                    </div>
+                    <div class="metric-badge-icon" style="background: rgba(129, 140, 248, 0.1); color: var(--accent-indigo);">
+                        <i data-lucide="key-round" style="width: 22px; height: 22px;"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bento Card 1: Multi-Source Weather Insights Hero (8 Columns) -->
+            <div class="bento-card hero-weather-bento">
+                <div class="card-header">
+                    <div class="card-title-group">
+                        <div class="card-icon">
+                            <i data-lucide="cloud-sun-rain" style="width: 18px; height: 18px;"></i>
+                        </div>
+                        <div>
+                            <div class="card-title">多源气象异构同屏比对核对所</div>
+                            <div class="card-subtitle">和风 · 百度 · 易客 对同一城市未来 7 天走势与一致性监测</div>
+                        </div>
+                    </div>
+
+                    <!-- City Selection Filter -->
+                    <div class="city-chips-bar">
+                        <button class="city-chip active" onclick="selectCity('北京', this)">
+                            <i data-lucide="compass" style="width: 14px; height: 14px;"></i>
+                            北京 (110000)
+                        </button>
+                        <button class="city-chip" onclick="selectCity('上海', this)">上海 (310000)</button>
+                        <button class="city-chip" onclick="selectCity('广州', this)">广州 (440100)</button>
+                        <button class="city-chip" onclick="selectCity('成都', this)">成都 (510100)</button>
+                    </div>
+                </div>
+
+                <div class="weather-hero-content">
+                    <!-- Left: Current Realtime Snapshot -->
+                    <div class="realtime-fusion-card">
+                        <div>
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                <span style="font-size: 13px; color: var(--text-muted); font-weight: 500;" id="selectedCityLabel">北京市 · 今日实况</span>
+                                <span style="font-size: 11px; background: rgba(56, 189, 248, 0.15); color: var(--accent-cyan); padding: 2px 6px; border-radius: 4px;">已融合清洗</span>
+                            </div>
+                            <div class="city-now-temp" id="cityNowTemp">23°</div>
+                            <div class="city-now-condition">
+                                <i data-lucide="sun-medium" style="color: var(--accent-amber); width: 20px; height: 20px;"></i>
+                                <span id="cityConditionTxt">晴转多云 · 东南风 2级</span>
+                            </div>
+                            <div style="font-size: 12px; color: var(--text-muted); margin-top: 6px;">
+                                相对湿度: 48% · 空气质量: <span style="color: var(--accent-emerald); font-weight: 600;">优 (AQI 32)</span>
+                            </div>
+                        </div>
+
+                        <!-- Source Breakdown -->
+                        <div class="source-tag-group">
+                            <div class="source-row hefeng">
+                                <span>和风天气</span>
+                                <span style="font-family: var(--font-mono); font-weight: 600;" id="hfTemp">23° / 11° · 晴</span>
+                            </div>
+                            <div class="source-row baidu">
+                                <span>百度天气</span>
+                                <span style="font-family: var(--font-mono); font-weight: 600;" id="bdTemp">24° / 12° · 多云</span>
+                            </div>
+                            <div class="source-row yike">
+                                <span>易客天气</span>
+                                <span style="font-family: var(--font-mono); font-weight: 600;" id="ykTemp">23° / 10° · 晴</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Multi-Source Interactive Curve Chart -->
+                    <div class="chart-container-box">
+                        <div class="chart-header-legend">
+                            <span style="font-weight: 600; color: var(--text-main);">未来 7 日最高气温交叉对比曲线 (°C)</span>
+                            <div class="legend-items">
+                                <div class="legend-item">
+                                    <div class="legend-dot" style="background: var(--hefeng-color);"></div>
+                                    <span>和风天气</span>
+                                </div>
+                                <div class="legend-item">
+                                    <div class="legend-dot" style="background: var(--baidu-color);"></div>
+                                    <span>百度天气</span>
+                                </div>
+                                <div class="legend-item">
+                                    <div class="legend-dot" style="background: var(--yike-color);"></div>
+                                    <span>易客天气</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="canvas-wrapper">
+                            <canvas id="tempChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bento Card 2: Channel Health & Quota Watermark (4 Columns) -->
+            <div class="bento-card channel-health-bento">
+                <div class="card-header">
+                    <div class="card-title-group">
+                        <div class="card-icon" style="color: var(--accent-emerald);">
+                            <i data-lucide="layers" style="width: 18px; height: 18px;"></i>
+                        </div>
+                        <div>
+                            <div class="card-title">渠道 Key 池与健康水位</div>
+                            <div class="card-subtitle">每日配额消耗、有效轮询与熔断防护</div>
+                        </div>
+                    </div>
+                    <button class="btn-action-sm" title="添加新渠道 Key" onclick="openAddKeyModal()">
+                        <i data-lucide="plus" style="width: 16px; height: 16px;"></i>
+                    </button>
+                </div>
+
+                <div class="channel-watermark-list">
+                    <!-- Hefeng -->
+                    <div class="channel-gauge-card">
+                        <div class="channel-top-bar">
+                            <div class="channel-brand-name">
+                                <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--hefeng-color);"></span>
+                                和风天气 (QWeather)
+                            </div>
+                            <span style="font-size: 11px; color: var(--accent-emerald); font-weight: 600;">2 个有效 Key 轮询</span>
+                        </div>
+                        <div class="progress-bar-bg">
+                            <div class="progress-fill" style="width: 42%; background: linear-gradient(90deg, #0284c7, #38bdf8);"></div>
+                        </div>
+                        <div class="channel-stats-sub">
+                            <span>今日消耗: 840 / 2,000 次</span>
+                            <span style="color: var(--accent-cyan);">剩余 58%</span>
+                        </div>
+                    </div>
+
+                    <!-- Baidu -->
+                    <div class="channel-gauge-card">
+                        <div class="channel-top-bar">
+                            <div class="channel-brand-name">
+                                <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--baidu-color);"></span>
+                                百度地图气象 (Baidu)
+                            </div>
+                            <span style="font-size: 11px; color: var(--accent-emerald); font-weight: 600;">3 个有效 Key 轮询</span>
+                        </div>
+                        <div class="progress-bar-bg">
+                            <div class="progress-fill" style="width: 65%; background: linear-gradient(90deg, #059669, #34d399);"></div>
+                        </div>
+                        <div class="channel-stats-sub">
+                            <span>今日消耗: 3,900 / 6,000 次</span>
+                            <span style="color: var(--accent-emerald);">剩余 35%</span>
+                        </div>
+                    </div>
+
+                    <!-- Yike -->
+                    <div class="channel-gauge-card">
+                        <div class="channel-top-bar">
+                            <div class="channel-brand-name">
+                                <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--yike-color);"></span>
+                                易客天气 (Yike)
+                            </div>
+                            <span style="font-size: 11px; color: var(--accent-amber); font-weight: 600;">1 个 Key 接近阈值</span>
+                        </div>
+                        <div class="progress-bar-bg">
+                            <div class="progress-fill" style="width: 88%; background: linear-gradient(90deg, #d97706, #fbbf24);"></div>
+                        </div>
+                        <div class="channel-stats-sub">
+                            <span>今日消耗: 1,760 / 2,000 次</span>
+                            <span style="color: var(--accent-amber);">剩余 12%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 14px; display: flex; gap: 8px;">
+                    <button class="btn-secondary" style="flex: 1; justify-content: center;" onclick="triggerManualSync()">
+                        <i data-lucide="refresh-cw" style="width: 14px; height: 14px;"></i>
+                        全量渠道即时补采
+                    </button>
+                </div>
+            </div>
+
+            <!-- Bento Card 3: Celery Beat Scheduler (6 Columns) -->
+            <div class="bento-card celery-scheduler-bento">
+                <div class="card-header">
+                    <div class="card-title-group">
+                        <div class="card-icon" style="color: var(--accent-indigo);">
+                            <i data-lucide="clock-4" style="width: 18px; height: 18px;"></i>
+                        </div>
+                        <div>
+                            <div class="card-title">Celery 动态定时调度中枢</div>
+                            <div class="card-subtitle">热生效机制 · 无须重启容器立即生效</div>
+                        </div>
+                    </div>
+                    <div class="hot-reload-badge">
+                        <i data-lucide="zap" style="width: 12px; height: 12px;"></i>
+                        热重载生效中
+                    </div>
+                </div>
+
+                <div class="scheduler-card-inner">
+                    <div>
+                        <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">全局定时抓取 Cron 表达式:</div>
+                        <div class="cron-display-box">
+                            <div class="cron-code" id="activeCronTxt">*/30 * * * *</div>
+                            <span style="font-size: 12px; color: var(--text-muted);">每 30 分钟同步一次全量城市</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">快捷周期预设:</div>
+                        <div class="preset-pills-row">
+                            <span class="preset-pill" onclick="applyPresetCron('*/15 * * * *', '每 15 分钟', this)">每 15 分钟</span>
+                            <span class="preset-pill active" onclick="applyPresetCron('*/30 * * * *', '每 30 分钟', this)">每 30 分钟</span>
+                            <span class="preset-pill" onclick="applyPresetCron('0 * * * *', '每小时整点', this)">每小时整点</span>
+                            <span class="preset-pill" onclick="applyPresetCron('0 */2 * * *', '每 2 小时', this)">每 2 小时</span>
+                            <span class="preset-pill" onclick="applyPresetCron('0 3 * * *', '每日凌晨 3 点', this)">每日凌晨 3 点</span>
+                        </div>
+                    </div>
+
+                    <div class="slider-group">
+                        <div class="slider-header">
+                            <span style="color: var(--text-muted);">防风控随机请求抖动延迟:</span>
+                            <span style="font-family: var(--font-mono); color: var(--accent-cyan); font-weight: 600;" id="delayVal">12 秒</span>
+                        </div>
+                        <input type="range" min="0" max="60" value="12" oninput="updateDelay(this.value)">
+                        <div style="font-size: 11px; color: var(--text-faint);">抓取不同城市时引入 0~N 秒随机散列休眠，避免突发高并发被气象服务商封禁。</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bento Card 4: Client API Credentials Matrix (6 Columns) -->
+            <div class="bento-card client-keys-bento">
+                <div class="card-header">
+                    <div class="card-title-group">
+                        <div class="card-icon" style="color: var(--accent-cyan);">
+                            <i data-lucide="shield-check" style="width: 18px; height: 18px;"></i>
+                        </div>
+                        <div>
+                            <div class="card-title">客户端访问密钥与网关限流</div>
+                            <div class="card-subtitle">细粒度 QPM 频控、IP 白名单与鉴权日志</div>
+                        </div>
+                    </div>
+                    <button class="btn-primary" onclick="openAddClientModal()">
+                        <i data-lucide="plus" style="width: 14px; height: 14px;"></i>
+                        颁发新 Key
+                    </button>
+                </div>
+
+                <div class="client-keys-list">
+                    <div class="client-key-row">
+                        <div class="key-title-wrap">
+                            <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(56, 189, 248, 0.1); display: flex; align-items: center; justify-content: center; color: var(--accent-cyan);">
+                                <i data-lucide="smartphone" style="width: 16px; height: 16px;"></i>
+                            </div>
+                            <div>
+                                <div class="key-name-txt">移动端 App (iOS / Android)</div>
+                                <div class="key-token-mono">ck_9f83a...bc41</div>
+                            </div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span class="key-tag-qpm">限流: 120 QPM</span>
+                            <span style="font-size: 12px; color: var(--text-muted); font-family: var(--font-mono);">今日 24,190 次</span>
+                            <button class="btn-action-sm" title="编辑密钥" onclick="editKey('移动端 App', 'ck_9f83a8b2910bc41', 120, '192.168.1.10\n10.0.4.1')">
+                                <i data-lucide="settings-2" style="width: 14px; height: 14px;"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="client-key-row">
+                        <div class="key-title-wrap">
+                            <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(52, 211, 153, 0.1); display: flex; align-items: center; justify-content: center; color: var(--accent-emerald);">
+                                <i data-lucide="laptop" style="width: 16px; height: 16px;"></i>
+                            </div>
+                            <div>
+                                <div class="key-name-txt">官方 Web 门户网关</div>
+                                <div class="key-token-mono">ck_12e4d...88aa</div>
+                            </div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span class="key-tag-qpm" style="color: var(--accent-emerald); border-color: rgba(52, 211, 153, 0.3); background: rgba(52, 211, 153, 0.1);">限流: 300 QPM</span>
+                            <span style="font-size: 12px; color: var(--text-muted); font-family: var(--font-mono);">今日 18,340 次</span>
+                            <button class="btn-action-sm" title="编辑密钥" onclick="editKey('官方 Web 门户', 'ck_12e4d3a8288aa09', 300, '')">
+                                <i data-lucide="settings-2" style="width: 14px; height: 14px;"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="client-key-row">
+                        <div class="key-title-wrap">
+                            <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(251, 191, 36, 0.1); display: flex; align-items: center; justify-content: center; color: var(--accent-amber);">
+                                <i data-lucide="bot" style="width: 16px; height: 16px;"></i>
+                            </div>
+                            <div>
+                                <div class="key-name-txt">内部数据同步机器人</div>
+                                <div class="key-token-mono">ck_44b09...c190</div>
+                            </div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span class="key-tag-qpm" style="color: var(--accent-amber); border-color: rgba(251, 191, 36, 0.3); background: rgba(251, 191, 36, 0.1);">无限制 (白名单)</span>
+                            <span style="font-size: 12px; color: var(--text-muted); font-family: var(--font-mono);">今日 5,760 次</span>
+                            <button class="btn-action-sm" title="编辑密钥" onclick="editKey('内部数据机器人', 'ck_44b099120c190ff', 0, '127.0.0.1')">
+                                <i data-lucide="settings-2" style="width: 14px; height: 14px;"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Edit Key Modal Mockup -->
+    <div class="modal-overlay" id="editKeyModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 style="font-family: var(--font-display); font-size: 18px;" id="modalTitle">编辑客户端密钥</h3>
+                <button class="modal-close" onclick="closeModal()"><i data-lucide="x" style="width: 20px; height: 20px;"></i></button>
+            </div>
+            <div class="form-item">
+                <label>密钥名称</label>
+                <input type="text" class="form-input" id="mKeyName" value="移动端 App">
+            </div>
+            <div class="form-item">
+                <label>自定义密钥值 (API Key Token)</label>
+                <input type="text" class="form-input" id="mKeyValue" value="ck_9f83a8b2910bc41" style="font-family: var(--font-mono);">
+            </div>
+            <div class="form-item">
+                <label>速率限制 (QPM，0 为不限)</label>
+                <input type="number" class="form-input" id="mKeyQpm" value="120">
+            </div>
+            <div class="form-item">
+                <label>IP 白名单 (每行一个)</label>
+                <textarea class="form-input" id="mKeyIps" rows="3" style="resize: vertical;">192.168.1.10&#10;10.0.4.1</textarea>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+                <button class="btn-secondary" onclick="closeModal()">取消</button>
+                <button class="btn-primary" onclick="saveKeyConfig()">保存并立即生效</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toastBox">
+        <i data-lucide="check-circle" style="color: var(--accent-emerald); width: 18px; height: 18px;"></i>
+        <span id="toastMsg">操作已成功同步</span>
+    </div>
+
+    <script>
+        // Initialize Icons
+        lucide.createIcons();
+
+        // Realtime Clock (Asia/Shanghai)
+        function updateClock() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false });
+            document.getElementById('beijingClock').textContent = timeStr + ' CST';
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // City Mock Data for Comparative Curves
+        const cityData = {
+            '北京': {
+                temp: '23°',
+                cond: '晴转多云 · 东南风 2级',
+                hf: '23° / 11° · 晴',
+                bd: '24° / 12° · 多云',
+                yk: '23° / 10° · 晴',
+                days: ['今天', '周日', '周一', '周二', '周三', '周四', '周五'],
+                hfTemps: [23, 25, 22, 19, 21, 24, 26],
+                bdTemps: [24, 24, 21, 20, 22, 25, 25],
+                ykTemps: [23, 26, 23, 19, 20, 23, 27]
+            },
+            '上海': {
+                temp: '26°',
+                cond: '阴天有小雨 · 东风 3级',
+                hf: '26° / 18° · 小雨',
+                bd: '25° / 17° · 阴',
+                yk: '26° / 18° · 小雨',
+                days: ['今天', '周日', '周一', '周二', '周三', '周四', '周五'],
+                hfTemps: [26, 24, 25, 27, 26, 28, 29],
+                bdTemps: [25, 23, 26, 26, 27, 28, 28],
+                ykTemps: [26, 25, 24, 28, 25, 29, 30]
+            },
+            '广州': {
+                temp: '31°',
+                cond: '雷阵雨 · 微风',
+                hf: '31° / 24° · 雷阵雨',
+                bd: '32° / 25° · 中雨',
+                yk: '31° / 24° · 雷雨',
+                days: ['今天', '周日', '周一', '周二', '周三', '周四', '周五'],
+                hfTemps: [31, 30, 32, 33, 31, 32, 33],
+                bdTemps: [32, 29, 31, 32, 30, 33, 34],
+                ykTemps: [31, 30, 33, 32, 32, 31, 33]
+            },
+            '成都': {
+                temp: '21°',
+                cond: '多云间阴 · 北风 1级',
+                hf: '21° / 14° · 多云',
+                bd: '22° / 15° · 阴',
+                yk: '21° / 14° · 多云',
+                days: ['今天', '周日', '周一', '周二', '周三', '周四', '周五'],
+                hfTemps: [21, 23, 20, 22, 24, 25, 23],
+                bdTemps: [22, 22, 21, 23, 25, 24, 22],
+                ykTemps: [21, 24, 19, 21, 24, 26, 24]
+            }
+        };
+
+        let currentCity = '北京';
+
+        function selectCity(city, btn) {
+            currentCity = city;
+            document.querySelectorAll('.city-chip').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            const data = cityData[city];
+            document.getElementById('selectedCityLabel').textContent = `${city}市 · 今日实况`;
+            document.getElementById('cityNowTemp').textContent = data.temp;
+            document.getElementById('cityConditionTxt').textContent = data.cond;
+            document.getElementById('hfTemp').textContent = data.hf;
+            document.getElementById('bdTemp').textContent = data.bd;
+            document.getElementById('ykTemp').textContent = data.yk;
+
+            drawChart();
+            showToast(`已切换至城市：${city}，多源数据实时联动重绘`);
+        }
+
+        // Draw Multi-Line Curve on Canvas
+        function drawChart() {
+            const canvas = document.getElementById('tempChart');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.getBoundingClientRect();
+
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            ctx.scale(dpr, dpr);
+
+            const w = rect.width;
+            const h = rect.height;
+            const padding = { top: 30, right: 30, bottom: 35, left: 35 };
+
+            ctx.clearRect(0, 0, w, h);
+
+            const data = cityData[currentCity];
+            const allTemps = [...data.hfTemps, ...data.bdTemps, ...data.ykTemps];
+            const minTemp = Math.min(...allTemps) - 2;
+            const maxTemp = Math.max(...allTemps) + 2;
+
+            const getX = index => padding.left + (index / (data.days.length - 1)) * (w - padding.left - padding.right);
+            const getY = val => padding.top + (1 - (val - minTemp) / (maxTemp - minTemp)) * (h - padding.top - padding.bottom);
+
+            // Draw horizontal grid lines
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+            ctx.lineWidth = 1;
+            for (let t = Math.floor(minTemp); t <= Math.ceil(maxTemp); t += 3) {
+                const y = getY(t);
+                ctx.beginPath();
+                ctx.moveTo(padding.left, y);
+                ctx.lineTo(w - padding.right, y);
+                ctx.stroke();
+
+                ctx.fillStyle = '#64748b';
+                ctx.font = '10px "JetBrains Mono"';
+                ctx.textAlign = 'right';
+                ctx.fillText(`${t}°`, padding.left - 8, y + 3);
+            }
+
+            // Draw X Axis labels
+            ctx.textAlign = 'center';
+            data.days.forEach((day, i) => {
+                const x = getX(i);
+                ctx.fillStyle = '#94a3b8';
+                ctx.font = '11px "Plus Jakarta Sans"';
+                ctx.fillText(day, x, h - 10);
+            });
+
+            // Helper to draw smooth bezier line
+            function drawCurve(temps, strokeColor, fillColor) {
+                ctx.beginPath();
+                for (let i = 0; i < temps.length; i++) {
+                    const x = getX(i);
+                    const y = getY(temps[i]);
+                    if (i === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        const prevX = getX(i - 1);
+                        const prevY = getY(temps[i - 1]);
+                        const cpX1 = prevX + (x - prevX) / 2;
+                        const cpX2 = prevX + (x - prevX) / 2;
+                        ctx.bezierCurveTo(cpX1, prevY, cpX2, y, x, y);
+                    }
+                }
+                ctx.strokeStyle = strokeColor;
+                ctx.lineWidth = 2.5;
+                ctx.shadowColor = strokeColor;
+                ctx.shadowBlur = 8;
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+
+                // Points
+                temps.forEach((val, i) => {
+                    const x = getX(i);
+                    const y = getY(val);
+                    ctx.beginPath();
+                    ctx.arc(x, y, 4, 0, Math.PI * 2);
+                    ctx.fillStyle = '#060913';
+                    ctx.fill();
+                    ctx.strokeStyle = strokeColor;
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                });
+            }
+
+            // Draw each source
+            drawCurve(data.hfTemps, '#38bdf8', 'rgba(56, 189, 248, 0.1)');
+            drawCurve(data.bdTemps, '#34d399', 'rgba(52, 211, 153, 0.1)');
+            drawCurve(data.ykTemps, '#fbbf24', 'rgba(251, 191, 36, 0.1)');
+        }
+
+        window.addEventListener('resize', drawChart);
+        setTimeout(drawChart, 100);
+
+        // Toast Helper
+        function showToast(msg) {
+            const toast = document.getElementById('toastBox');
+            document.getElementById('toastMsg').textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        // Celery Presets
+        function applyPresetCron(cron, desc, elem) {
+            document.querySelectorAll('.preset-pill').forEach(p => p.classList.remove('active'));
+            elem.classList.add('active');
+            document.getElementById('activeCronTxt').textContent = cron;
+            showToast(`定时抓取周期已热重载为: ${desc} (${cron})`);
+        }
+
+        function updateDelay(val) {
+            document.getElementById('delayVal').textContent = `${val} 秒`;
+        }
+
+        function triggerManualSync() {
+            showToast('已向 Celery 调度器派发各渠道全量补采任务 (Job #8291)');
+        }
+
+        // Modal Controls
+        function editKey(name, token, qpm, ips) {
+            document.getElementById('modalTitle').textContent = `编辑密钥: ${name}`;
+            document.getElementById('mKeyName').value = name;
+            document.getElementById('mKeyValue').value = token;
+            document.getElementById('mKeyQpm').value = qpm;
+            document.getElementById('mKeyIps').value = ips;
+            document.getElementById('editKeyModal').style.display = 'flex';
+        }
+
+        function openAddClientModal() {
+            document.getElementById('modalTitle').textContent = '颁发新客户端 API Key';
+            document.getElementById('mKeyName').value = '';
+            document.getElementById('mKeyValue').value = 'ck_' + Math.random().toString(36).substring(2, 12);
+            document.getElementById('mKeyQpm').value = 60;
+            document.getElementById('mKeyIps').value = '';
+            document.getElementById('editKeyModal').style.display = 'flex';
+        }
+
+        function openAddKeyModal() {
+            showToast('可在此弹出渠道 Key 配置表单');
+        }
+
+        function closeModal() {
+            document.getElementById('editKeyModal').style.display = 'none';
+        }
+
+        function saveKeyConfig() {
+            closeModal();
+            showToast('密钥配置已保存并在全局网关毫秒级生效');
+        }
+    </script>
+</body>
+</html>

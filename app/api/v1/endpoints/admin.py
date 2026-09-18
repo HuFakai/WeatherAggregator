@@ -198,6 +198,31 @@ async def remove_key(
         
     return {"status": "removed", "key": key}
 
+class ChannelKeyStatusUpdateRequest(BaseModel):
+    key: str
+    status: str  # "active" or "disabled"
+
+@router.put("/channels/{channel_name}/keys/status")
+async def update_channel_key_status(
+    channel_name: str,
+    request: ChannelKeyStatusUpdateRequest,
+    admin_auth: str = Depends(verify_admin_access)
+):
+    """
+    切换渠道 API Key 的启用/禁用状态 (active / disabled)
+    """
+    if request.status not in ["active", "disabled"]:
+        raise HTTPException(status_code=400, detail="状态必须为 active 或 disabled")
+
+    db = db_manager.get_db()
+    result = db.channel_configs.update_one(
+        {"_id": channel_name, "keys_pool.key": request.key},
+        {"$set": {"keys_pool.$.status": request.status}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="未找到对应的渠道或 Key")
+    return {"status": "updated", "channel": channel_name, "key": request.key, "new_status": request.status}
+
 @router.post("/channels/{channel_name}/update")
 async def trigger_update(
     channel_name: str,
@@ -237,11 +262,17 @@ async def update_channel_schedule(
     if not update_payload:
         raise HTTPException(status_code=400, detail="未提供任何修改数据")
 
-    # 校验 Cron 格式
+    # 校验 Cron 格式 (支持逗号或换行分隔的多条规则)
     if "cron" in update_payload and update_payload["cron"]:
         cron_val = update_payload["cron"]
         from app.worker.scheduler import parse_cron_expr
-        cron_list = cron_val if isinstance(cron_val, list) else [cron_val]
+        import re
+        if isinstance(cron_val, str):
+            cron_list = [s.strip() for s in re.split(r'[,\n]+', cron_val) if s.strip()]
+        elif isinstance(cron_val, list):
+            cron_list = [s.strip() for s in cron_val if isinstance(s, str) and s.strip()]
+        else:
+            cron_list = []
         for expr in cron_list:
             try:
                 parse_cron_expr(expr)
