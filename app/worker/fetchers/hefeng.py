@@ -1,9 +1,11 @@
 import requests
 from typing import List, Dict
 from app.worker.fetchers.base import BaseFetcher
+from app.worker.fetchers.registry import FetcherRegistry
 from app.models.weather import StandardDailyWeather
 from app.core.logger import logger
 
+@FetcherRegistry.register("hefeng")
 class HeFengFetcher(BaseFetcher):
     """
     和风天气 (QWeather) 抓取器

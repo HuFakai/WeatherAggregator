@@ -2,7 +2,7 @@ import random
 from typing import Optional, List, Dict
 from pymongo.database import Database
 from redis import Redis
-from datetime import datetime
+from datetime import datetime, timedelta
 from app.core.logger import logger
 
 class KeyManager: # Renamed from RandomKeyManager to generic KeyManager if preferred, but keeping class name for compatibility
@@ -76,13 +76,10 @@ class KeyManager: # Renamed from RandomKeyManager to generic KeyManager if prefe
         redis_key = f"stats:usage:{channel_name}:{today}"
         
         try:
-            # 增加计数
-            self.redis.hincrby(redis_key, key, 1)
-            
-            # 设置过期时间 (3天 = 3 * 24 * 3600 = 259200 秒)
-            if self.redis.ttl(redis_key) == -1:
-                self.redis.expire(redis_key, 259200)
-                
+            pipe = self.redis.pipeline()
+            pipe.hincrby(redis_key, key, 1)
+            pipe.expire(redis_key, 259200)  # 3 天过期
+            pipe.execute()
         except Exception as e:
             logger.error(f"记录统计失败: {e}")
 

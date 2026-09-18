@@ -8,11 +8,6 @@ class Settings(BaseSettings):
     # Server
     WEB_PORT: int = 18050
     
-    # SSH Tunnel
-    SSH_HOST: str = "115.190.90.61"
-    SSH_PORT: int = 22
-    SSH_USER: str = "root"
-    SSH_PASS: str = "FaKai970506//"
     
     # MongoDB
     MONGO_HOST: str = "127.0.0.1"

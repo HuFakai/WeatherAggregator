@@ -150,12 +150,19 @@ docker compose restart beat
    curl http://localhost:8080
    ```
 
-### 4.4 更新定时任务配置
-修改定时任务时间后:
-```bash
-# 仅重启 beat 服务以重新加载调度
-docker compose restart beat
-```
+### 4.4 更新定时任务配置 (动态热重载无需重启)
+得益于全新实现的 `DynamicMongoScheduler` 与 Redis 信号通知机制：
+- **Web 后台修改 (推荐)**: 在管理后台 (`/admin`) 直接编辑渠道的定时调度，保存后 Celery Beat 将在 **5 秒内自动热加载新配置，无需重启 beat 容器**！
+- **直接修改数据库**: 若通过 Mongo 客户端直接更新了 `channel_configs` 集合，只需在 Redis 执行一条信号命令触发即刻热加载：
+  ```bash
+  # 向 Redis 发送重载信号
+  docker compose exec -T app python -c "from app.worker.scheduler import notify_beat_schedule_changed; notify_beat_schedule_changed()"
+  ```
+- **常规重启备用命令**:
+  ```bash
+  docker compose restart beat
+  ```
+
 
 ### 4.5 查看服务状态
 ```bash

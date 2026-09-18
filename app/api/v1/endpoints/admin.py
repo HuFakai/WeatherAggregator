@@ -72,6 +72,7 @@ async def delete_client_key(
     return {"status": "deleted"}
 
 class KeyUpdateRequest(BaseModel):
+    new_key: Optional[str] = None
     ip_whitelist_enabled: Optional[bool] = None
     ip_whitelist: Optional[List[str]] = None
     qpm_limit: Optional[int] = None
@@ -83,16 +84,23 @@ async def update_client_key(
     admin_auth: str = Depends(verify_admin_access)
 ):
     """
-    更新客户端密钥配置
+    更新客户端密钥配置 (支持修改密钥值、IP白名单及QPM)
     """
     data = update_data.model_dump(exclude_unset=True)
     if not data:
         raise HTTPException(status_code=400, detail="No data provided")
-        
-    success = client_key_manager.update_key(key, data)
+
+    new_key = data.pop("new_key", None)
+    if new_key is not None:
+        new_key = new_key.strip()
+        if not new_key:
+            raise HTTPException(status_code=400, detail="密钥值不能为空")
+
+    success, err_msg = client_key_manager.update_key(key, data, new_key=new_key)
     if not success:
-        raise HTTPException(status_code=404, detail="Key not found")
-    return {"status": "updated"}
+        status_code = 404 if "原密钥不存在" in err_msg else 400
+        raise HTTPException(status_code=status_code, detail=err_msg)
+    return {"status": "updated", "key": new_key or key}
 
 @router.get("/channels")
 async def list_channels(admin_auth: str = Depends(verify_admin_access)):
@@ -201,3 +209,54 @@ async def trigger_update(
     trigger_channel_update.delay(channel_name)
     
     return {"status": "triggered", "message": f"Update task for {channel_name} started"}
+
+class ChannelScheduleUpdateRequest(BaseModel):
+    cron: Optional[str] = None
+    is_active: Optional[bool] = None
+    wait_min: Optional[float] = None
+    wait_max: Optional[float] = None
+
+@router.put("/channels/{channel_name}/schedule")
+async def update_channel_schedule(
+    channel_name: str,
+    request: ChannelScheduleUpdateRequest,
+    admin_auth: str = Depends(verify_admin_access)
+):
+    """
+    更新渠道的定时调度配置 (Cron 表达式、启停状态、延时区间)，并触发 Celery Beat 动态重载
+    """
+    db = db_manager.get_db()
+    channel = db.channel_configs.find_one({"_id": channel_name})
+    if not channel:
+        raise HTTPException(status_code=404, detail=f"渠道不存在: {channel_name}")
+
+    update_payload = request.model_dump(exclude_unset=True)
+    if not update_payload:
+        raise HTTPException(status_code=400, detail="未提供任何修改数据")
+
+    # 校验 Cron 格式
+    if "cron" in update_payload and update_payload["cron"]:
+        cron_val = update_payload["cron"]
+        from app.worker.scheduler import parse_cron_expr
+        cron_list = cron_val if isinstance(cron_val, list) else [cron_val]
+        for expr in cron_list:
+            try:
+                parse_cron_expr(expr)
+            except ValueError as ve:
+                raise HTTPException(status_code=400, detail=str(ve))
+
+    # 更新数据库
+    db.channel_configs.update_one(
+        {"_id": channel_name},
+        {"$set": update_payload}
+    )
+
+    # 触发 Celery Beat 热重载通知
+    from app.worker.scheduler import notify_beat_schedule_changed
+    notify_beat_schedule_changed()
+
+    return {
+        "status": "updated",
+        "channel": channel_name,
+        "data": update_payload
+    }

@@ -57,15 +57,30 @@ celery -A app.celery_app beat -l info
     -   **Parameters**: `-A app.celery_app beat -l info`
     -   **Working directory**: 项目根目录
 
-## 4. 测试脚本 (Testing)
+## 4. 测试与验证 (Testing)
 
-项目根目录下提供了 `test_api_full.py` 脚本，用于全面测试 API 功能。
+### 4.1 自动化单元测试 (无需启动本地 Web 服务)
+项目配备了高覆盖率的单元测试套件，直接在项目根目录下运行：
 
 ```bash
-python3 test_api_full.py
+# 运行全部核心业务、数据模型与生命周期治理测试
+python3 -m unittest tests/test_optimizations.py
+
+# 运行定时任务调度规则解析测试
+python3 tests/test_cron_schedule.py
 ```
 
-该脚本会测试：
-1.  **Admin API**: 获取渠道列表、添加 Key、修改 Cron。
-2.  **Weather API**: 通过 ID、Adcode、名称查询天气。
-3.  **Admin Page**: 检查管理后台页面是否可访问。
+### 4.2 端到端集成测试 (需先启动 Web 服务)
+当本地 Web 服务在 `http://127.0.0.1:18050` 启动后，运行集成验证脚本：
+
+```bash
+python3 tests/verify_core_features.py
+```
+
+该脚本会自动验证：
+1. **Admin 登录鉴权**: 校验超级管理员 Key 是否有效。
+2. **客户端 Key 生命周期**: 自动化创建、配置 QPM 限制、配置 IP 白名单。
+3. **Weather API**: 测试 Path/Query 传参方式及实时聚合返回。
+4. **限流防刷拦截**: 模拟高频突发流量，验证 429 拦截。
+5. **数据清理**: 自动化回收测试生成的测试 Key。
+

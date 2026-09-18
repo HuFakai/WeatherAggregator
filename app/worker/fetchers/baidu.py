@@ -1,20 +1,13 @@
 import requests
+import urllib.parse
+import hashlib
 from typing import List, Dict
 from app.worker.fetchers.base import BaseFetcher
+from app.worker.fetchers.registry import FetcherRegistry
 from app.models.weather import StandardDailyWeather
 from app.core.logger import logger
 
-class BaiduFetcher(BaseFetcher):
-    """
-    百度天气抓取器实现
-    负责调用百度地图 API 获取天气数据并进行标准化
-    """
-    CHANNEL_NAME = "baidu"
-    BASE_URL = "https://api.map.baidu.com/weather/v1/"
-
-import urllib.parse
-import hashlib
-
+@FetcherRegistry.register("baidu")
 class BaiduFetcher(BaseFetcher):
     """
     百度天气抓取器实现

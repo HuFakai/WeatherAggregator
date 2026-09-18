@@ -61,18 +61,64 @@ class ClientKeyManager:
             return True
         return False
 
-    def update_key(self, key: str, data: dict) -> bool:
+    def update_key(self, key: str, data: dict, new_key: Optional[str] = None) -> tuple[bool, str]:
         """
-        更新密钥配置
+        更新密钥配置，支持修改密钥字符串并迁移 Redis 统计数据
         """
+        doc = self.db[self.COLLECTION].find_one({"key": key})
+        if not doc:
+            return False, "原密钥不存在"
+
+        update_payload = data.copy()
+
+        # 如果需要修改密钥值
+        if new_key and new_key != key:
+            # 校验新 key 是否已被占用
+            existing = self.db[self.COLLECTION].find_one({"key": new_key})
+            if existing:
+                return False, f"密钥 '{new_key}' 已存在，请使用其他值"
+            update_payload["key"] = new_key
+
+        if not update_payload:
+            return True, ""
+
         result = self.db[self.COLLECTION].update_one(
             {"key": key},
-            {"$set": data}
+            {"$set": update_payload}
         )
-        if result.matched_count > 0:
-            logger.info(f"Updated client key: {key} with {data}")
-            return True
-        return False
+
+        if result.matched_count == 0:
+            return False, "密钥更新失败"
+
+        # 若修改了 key，迁移 Redis 中的调用统计
+        if new_key and new_key != key:
+            try:
+                today = datetime.now()
+                read_pipe = self.redis.pipeline()
+                dates = [(today - timedelta(days=i)).strftime("%Y-%m-%d") for i in range(self.STATS_RETENTION_DAYS + 1)]
+                for d in dates:
+                    old_k = f"{self.STATS_PREFIX}:{key}:{d}"
+                    read_pipe.get(old_k)
+                    read_pipe.ttl(old_k)
+                res = read_pipe.execute()
+
+                write_pipe = self.redis.pipeline()
+                for idx, d in enumerate(dates):
+                    val = res[idx * 2]
+                    ttl = res[idx * 2 + 1]
+                    if val is not None:
+                        new_k = f"{self.STATS_PREFIX}:{new_key}:{d}"
+                        old_k = f"{self.STATS_PREFIX}:{key}:{d}"
+                        exp = ttl if ttl > 0 else 86400 * self.STATS_RETENTION_DAYS
+                        write_pipe.setex(new_k, exp, val)
+                        write_pipe.delete(old_k)
+                write_pipe.execute()
+                logger.info(f"成功将客户端密钥调用统计从 {key} 迁移至 {new_key}")
+            except Exception as e:
+                logger.error(f"迁移 Redis 统计失败 ({key} -> {new_key}): {e}")
+
+        logger.info(f"Updated client key: {key} -> {new_key or key} with {data}")
+        return True, ""
 
     def validate_access(self, key: str, ip: str) -> tuple[bool, str]:
         """
@@ -99,9 +145,12 @@ class ClientKeyManager:
             current_minute = int(datetime.now().timestamp() // 60)
             rate_key = f"rate_limit:client:{key}:{current_minute}"
             
-            current_count = self.redis.incr(rate_key)
-            if current_count == 1:
-                self.redis.expire(rate_key, 65) # 1分钟后过期
+            # 使用 pipeline 保证 incr 与 expire 必然同时生效，彻底杜绝无 TTL 累积无用键
+            pipe = self.redis.pipeline()
+            pipe.incr(rate_key)
+            pipe.expire(rate_key, 65)  # 1分钟后过期
+            results = pipe.execute()
+            current_count = results[0]
                 
             if current_count > client_key.qpm_limit:
                 logger.warning(f"Rate limit exceeded for key {key} (Limit: {client_key.qpm_limit}, Current: {current_count})")

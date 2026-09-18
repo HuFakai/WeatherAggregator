@@ -129,6 +129,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 location.reload();
                 return null;
             }
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                showToast(errData.detail || `请求失败 (${res.status})`, 'error');
+                return null;
+            }
             return res.json();
         } catch (error) {
             console.error('API Error:', error);
@@ -294,6 +299,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Edit Logic
     const editKeyModal = document.getElementById('editKeyModal');
     const editKeyId = document.getElementById('editKeyId');
+    const editKeyValue = document.getElementById('editKeyValue');
     const editKeyQpm = document.getElementById('editKeyQpm');
     const editKeyIpList = document.getElementById('editKeyIpList');
     const editKeyIpEnabled = document.getElementById('editKeyIpEnabled');
@@ -302,6 +308,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.openEditClientKey = (keyDataStr) => {
         const k = JSON.parse(keyDataStr);
         editKeyId.value = k.key;
+        if (editKeyValue) editKeyValue.value = k.key;
         editKeyQpm.value = k.qpm_limit || 0;
         editKeyIpList.value = (k.ip_whitelist || []).join('\n');
         editKeyIpEnabled.checked = k.ip_whitelist_enabled || false;
@@ -309,16 +316,26 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     submitEditKey.onclick = async () => {
-        const key = editKeyId.value;
+        const originalKey = editKeyId.value;
+        const newKey = editKeyValue ? editKeyValue.value.trim() : originalKey;
+        if (!newKey) return alert('密钥值不能为空');
+
         const qpm = parseInt(editKeyQpm.value) || 0;
         const ipList = editKeyIpList.value.split('\n').map(ip => ip.trim()).filter(ip => ip);
         const ipEnabled = editKeyIpEnabled.checked;
 
-        await apiCall(`/api/v1/admin/keys/${key}`, 'PUT', {
+        const payload = {
             qpm_limit: qpm,
             ip_whitelist: ipList,
             ip_whitelist_enabled: ipEnabled
-        });
+        };
+
+        if (newKey !== originalKey) {
+            payload.new_key = newKey;
+        }
+
+        const res = await apiCall(`/api/v1/admin/keys/${encodeURIComponent(originalKey)}`, 'PUT', payload);
+        if (!res) return;
 
         editKeyModal.style.display = 'none';
         showToast('配置已更新');
@@ -372,20 +389,29 @@ document.addEventListener('DOMContentLoaded', () => {
         channelList.innerHTML = channels.map(c => {
             const keys = c.keys_pool || [];
             const totalCalls = keys.reduce((sum, k) => sum + (k.total_3d || 0), 0);
+            const cronText = c.cron || '未配置';
+            const isActive = c.is_active !== false;
+            const randomDelay = c.random_delay !== undefined ? c.random_delay : 10;
 
             return `
             <div class="glass-card channel-card">
-                <div class="card-header" style="padding: 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                <div class="card-header" style="padding: 1.5rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
                     <div class="card-title-group">
                         <div class="card-title" style="display: flex; align-items: center; gap: 8px;">
-                            <span class="channel-status-dot ${c.is_active ? '' : 'inactive'}"></span>
+                            <span class="channel-status-dot ${isActive ? '' : 'inactive'}"></span>
                             ${c._id.toUpperCase()}
+                            <span class="badge ${isActive ? 'badge-info' : 'badge-warning'}" style="font-family: monospace; font-size: 0.75rem; margin-left: 6px; display: inline-flex; align-items: center; gap: 4px;">
+                                <i data-lucide="clock" style="width: 12px; height: 12px;"></i> ${cronText}
+                            </span>
                         </div>
-                        <div class="card-subtitle" style="color: var(--text-muted); font-size: 0.85rem;">3日总调用: ${totalCalls}</div>
+                        <div class="card-subtitle" style="color: var(--text-muted); font-size: 0.85rem;">3日总调用: ${totalCalls} | 抖动延时: 0~${randomDelay}s</div>
                     </div>
-                    <div class="card-actions" style="display: flex; gap: 10px;">
+                    <div class="card-actions" style="display: flex; gap: 10px; flex-wrap: wrap;">
                          <button class="btn-primary" style="padding: 6px 12px; font-size: 0.85rem;" onclick="triggerChannelUpdate('${c._id}')">
                             <i data-lucide="refresh-cw" style="width: 14px;"></i> 一键更新
+                        </button>
+                        <button class="btn-primary" style="padding: 6px 12px; font-size: 0.85rem; background: transparent; border: 1px solid var(--border-color);" onclick="openEditScheduleModal('${c._id}', '${c.cron || ''}', ${isActive}, ${randomDelay})">
+                            <i data-lucide="calendar" style="width: 14px;"></i> 定时调度
                         </button>
                         <button class="btn-primary" style="padding: 6px 12px; font-size: 0.85rem; background: transparent; border: 1px solid var(--border-color);" onclick="openAddChannelKey('${c._id}')">
                             <i data-lucide="plus" style="width: 14px;"></i> 添加 Key
@@ -445,6 +471,55 @@ document.addEventListener('DOMContentLoaded', () => {
 
         lucide.createIcons();
     }
+
+    // Schedule Modal Logic
+    const editScheduleModal = document.getElementById('editScheduleModal');
+    const editScheduleTitle = document.getElementById('editScheduleTitle');
+    const editScheduleChannelName = document.getElementById('editScheduleChannelName');
+    const editScheduleEnabled = document.getElementById('editScheduleEnabled');
+    const editScheduleCron = document.getElementById('editScheduleCron');
+    const editScheduleDelay = document.getElementById('editScheduleDelay');
+    const submitEditSchedule = document.getElementById('submitEditSchedule');
+
+    window.openEditScheduleModal = (channel, cron, isActive, randomDelay) => {
+        editScheduleChannelName.value = channel;
+        editScheduleTitle.textContent = `配置 [${channel.toUpperCase()}] 定时调度`;
+        editScheduleCron.value = cron || '*/30 * * * *';
+        editScheduleEnabled.checked = isActive !== false;
+        editScheduleDelay.value = randomDelay !== undefined ? randomDelay : 10;
+        editScheduleModal.style.display = 'flex';
+    };
+
+    document.querySelectorAll('#editScheduleModal .preset-chip').forEach(chip => {
+        chip.onclick = () => {
+            const cron = chip.getAttribute('data-cron');
+            if (cron) {
+                editScheduleCron.value = cron;
+            }
+        };
+    });
+
+    submitEditSchedule.onclick = async () => {
+        const channel = editScheduleChannelName.value;
+        const cron = editScheduleCron.value.trim();
+        const isActive = editScheduleEnabled.checked;
+        const randomDelay = parseInt(editScheduleDelay.value) || 0;
+
+        if (!cron) return alert('请输入 Cron 表达式');
+
+        const payload = {
+            cron: cron,
+            is_active: isActive,
+            random_delay: randomDelay
+        };
+
+        const res = await apiCall(`/api/v1/admin/channels/${encodeURIComponent(channel)}/schedule`, 'PUT', payload);
+        if (!res) return;
+
+        editScheduleModal.style.display = 'none';
+        showToast(`[${channel.toUpperCase()}] 定时调度已更新并在后台动态生效！`);
+        loadChannels();
+    };
 
     window.openAddChannelKey = (channel) => {
         currentChannel = channel;

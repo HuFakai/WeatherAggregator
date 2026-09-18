@@ -26,10 +26,11 @@ def test_load_beat_schedule():
     ]
 
     # Mock get_db
-    with patch("app.celery_app.get_db") as mock_get_db:
+    with patch("app.worker.scheduler.get_db") as mock_get_db:
         mock_db = MagicMock()
         mock_db.channel_configs.find.return_value = mock_configs
         mock_get_db.return_value = mock_db
+
 
         # Import the function to test
         # Note: We need to import inside the patch context or reload the module if it was already imported

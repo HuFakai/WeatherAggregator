@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, Query, Security, BackgroundTasks
+from fastapi import APIRouter, HTTPException, Depends, Query, Security, BackgroundTasks, Request
 from fastapi.security import APIKeyHeader, APIKeyQuery
 from typing import Optional, Dict
 from datetime import datetime
@@ -9,10 +9,7 @@ from app.core.city_manager import city_manager
 from app.core.db import db_manager, get_redis_client
 from app.models.weather import WeatherRecord
 from app.core.client_key_manager import client_key_manager
-from app.core.key_manager import RandomKeyManager
-from app.worker.fetchers.baidu import BaiduFetcher
-from app.worker.fetchers.yike import YiKeFetcher
-from app.worker.fetchers.hefeng import HeFengFetcher
+from app.worker.fetchers import FetcherRegistry
 from app.core.logger import logger
 
 router = APIRouter()
@@ -20,8 +17,6 @@ router = APIRouter()
 # 定义 API Key 来源 (Header 或 Query)
 api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 api_key_query = APIKeyQuery(name="key", auto_error=False)
-
-from fastapi import Request
 
 async def get_api_key(
     request: Request,
@@ -38,7 +33,7 @@ async def get_api_key(
     # 获取真实 IP (考虑代理)
     client_ip = request.client.host
     if "x-forwarded-for" in request.headers:
-        client_ip = request.headers["x-forwarded-for"].split(",")[0]
+        client_ip = request.headers["x-forwarded-for"].split(",")[0].strip()
         
     is_valid, error_msg = client_key_manager.validate_access(key, client_ip)
     if not is_valid:
@@ -46,16 +41,6 @@ async def get_api_key(
         raise HTTPException(status_code=status_code, detail=error_msg)
         
     return key
-
-def get_fetcher(channel_name, db, redis_client):
-    key_manager = RandomKeyManager(db, redis_client)
-    if channel_name == "baidu":
-        return BaiduFetcher(key_manager)
-    elif channel_name == "yiketianqi":
-        return YiKeFetcher(key_manager)
-    elif channel_name == "hefeng":
-        return HeFengFetcher(key_manager)
-    return None
 
 def save_weather_data(city_id: str, city_name: str, new_data: dict):
     """
@@ -65,7 +50,7 @@ def save_weather_data(city_id: str, city_name: str, new_data: dict):
         db = db_manager.get_db()
         current_time_str = datetime.now(ZoneInfo("Asia/Shanghai")).isoformat()
         
-        # 查询城市的adcode
+        # 查询城市的 adcode
         city_info = db.cities.find_one({"_id": city_id})
         adcode = city_info.get("adcode") if city_info else city_id + "000000"
         
@@ -86,14 +71,13 @@ def save_weather_data(city_id: str, city_name: str, new_data: dict):
     except Exception as e:
         logger.error(f"Background update failed for {city_name} ({city_id}): {e}")
 
-@router.get("", response_model=WeatherRecord)
-async def get_weather(
+async def _get_weather_core(
+    city: str,
     background_tasks: BackgroundTasks,
-    city: str = Query(..., description="城市名称或 ID (如: 北京, 101010100)"),
-    api_key: str = Depends(get_api_key)
-):
+    api_key: str
+) -> dict:
     """
-    获取指定城市的天气信息 (需 API Key)
+    获取指定城市天气核心逻辑 (包含缓存检测、多源实时聚合、异步回写)
     """
     # 1. 记录调用统计
     client_key_manager.track_usage(api_key)
@@ -161,13 +145,13 @@ async def get_weather(
         
     def fetch_channel_data(config):
         channel_name = config["_id"]
-        fetcher = get_fetcher(channel_name, db, redis_client)
+        fetcher = FetcherRegistry.get_fetcher(channel_name, db, redis_client)
         if not fetcher:
             return None
         try:
             raw = fetcher.fetch(city_id)
             normalized = fetcher.normalize(raw)
-            return channel_name, [w.dict() for w in normalized]
+            return channel_name, [w.model_dump() for w in normalized]
         except Exception as e:
             logger.error(f"Real-time fetch failed for {channel_name}: {e}")
             return None
@@ -190,3 +174,27 @@ async def get_weather(
         "last_updated_at": datetime.now(ZoneInfo("Asia/Shanghai")).isoformat(),
         "sources": new_sources_data
     }
+
+@router.get("", response_model=WeatherRecord, summary="获取指定城市天气 (Query 参数)")
+async def get_weather_by_query(
+    background_tasks: BackgroundTasks,
+    city: Optional[str] = Query(None, description="城市名称或 ID (如: 北京, 101010100)"),
+    api_key: str = Depends(get_api_key)
+):
+    """
+    获取指定城市天气信息 (支持 Query 传参: ?city=北京)
+    """
+    if not city:
+        raise HTTPException(status_code=400, detail="Missing required query parameter: city")
+    return await _get_weather_core(city, background_tasks, api_key)
+
+@router.get("/{city}", response_model=WeatherRecord, summary="获取指定城市天气 (Path 参数)")
+async def get_weather_by_path(
+    city: str,
+    background_tasks: BackgroundTasks,
+    api_key: str = Depends(get_api_key)
+):
+    """
+    获取指定城市天气信息 (支持 Path 传参: /api/v1/weather/北京)
+    """
+    return await _get_weather_core(city, background_tasks, api_key)

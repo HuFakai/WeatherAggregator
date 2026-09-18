@@ -2,9 +2,11 @@ import requests
 import time
 from typing import List, Dict
 from app.worker.fetchers.base import BaseFetcher
+from app.worker.fetchers.registry import FetcherRegistry
 from app.models.weather import StandardDailyWeather, LifestyleIndex
 from app.core.logger import logger
 
+@FetcherRegistry.register("yiketianqi")
 class YiKeFetcher(BaseFetcher):
     """
     一客天气 (Yiketianqi) 抓取器实现

@@ -4,28 +4,13 @@ from zoneinfo import ZoneInfo
 from pymongo import MongoClient
 from redis import Redis
 from app.celery_app import celery_app
-from app.core.key_manager import RandomKeyManager
-from app.worker.fetchers.baidu import BaiduFetcher
-from app.worker.fetchers.yike import YiKeFetcher
-from app.worker.fetchers.hefeng import HeFengFetcher
+from app.worker.fetchers import FetcherRegistry
 from app.core.city_manager import CityManager
-from app.core.db import get_db, get_redis_client
+from app.core.db import get_db
 from app.core.logger import logger
 
 def get_fetcher(channel_name):
-    # 重新获取 db 和 redis_client 以确保连接有效
-    # 或者使用全局的? 任务中最好每次获取或复用
-    db = get_db()
-    redis_client = get_redis_client()
-    key_manager = RandomKeyManager(db, redis_client)
-    
-    if channel_name == "baidu":
-        return BaiduFetcher(key_manager)
-    elif channel_name == "yiketianqi":
-        return YiKeFetcher(key_manager)
-    elif channel_name == "hefeng":
-        return HeFengFetcher(key_manager)
-    return None
+    return FetcherRegistry.get_fetcher(channel_name)
 
 # 初始化 KeyManager 实例 (全局实例可能在 fork 后有问题，建议在任务内或 get_fetcher 内初始化)
 # key_manager = RandomKeyManager(db, redis_client)
@@ -102,7 +87,7 @@ def update_city_weather(city_identifier: str, channel_name: str):
         collection = db.weather_records
         
         update_data = {
-            f"sources.{channel_name}": [w.dict() for w in standard_weather_list],
+            f"sources.{channel_name}": [w.model_dump() for w in standard_weather_list],
             "last_updated_at":datetime.now(ZoneInfo("Asia/Shanghai")).isoformat(),
             "city_name": city_info.get("name"),
             "adcode": adcode
