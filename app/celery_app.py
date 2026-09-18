@@ -19,9 +19,10 @@ celery_app.conf.update(
     task_serializer="json",       # 任务序列化格式为 JSON
     accept_content=["json"],      # 接受的内容类型为 JSON
     result_serializer="json",     # 结果序列化格式为 JSON
-    timezone="Asia/Shanghai",     # 设置时区为上海时间
-    enable_utc=True,              # 启用 UTC
+    timezone="Asia/Shanghai",     # 设置时区为上海时间 (北京时间)
+    enable_utc=False,             # 禁用 UTC 转换，确保 Cron 调度严格以北京时间为基准执行
     task_ignore_result=True,      # 忽略任务返回结果，避免在 Redis 中累积大量 celery-task-meta 临时无用键
+
     beat_scheduler="app.worker.scheduler.DynamicMongoScheduler",  # 启用支持动态重载的 MongoDB 调度器
 )
 

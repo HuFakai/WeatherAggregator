@@ -30,13 +30,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const newChannelLimit = document.getElementById('newChannelLimit');
     const newChannelDesc = document.getElementById('newChannelDesc');
 
-    // Initialize Dashboard Time
+    // Initialize Dashboard Time (统一北京时间)
     function updateTime() {
         const now = new Date();
-        currentTimeEl.textContent = now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+        currentTimeEl.textContent = now.toLocaleTimeString('zh-CN', { timeZone: 'Asia/Shanghai', hour: '2-digit', minute: '2-digit' });
     }
     setInterval(updateTime, 1000);
     updateTime();
+
 
     // --- Auth Logic ---
     function checkAuth() {
@@ -248,9 +249,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="key-title">${k.name}</div>
                         <div class="key-meta">
                             <span class="badge" style="background: rgba(255,255,255,0.1); color: var(--text-muted)">
-                                ${new Date(k.created_at).toLocaleDateString()}
+                                ${new Date(k.created_at).toLocaleDateString('zh-CN', { timeZone: 'Asia/Shanghai' })}
                             </span>
                             ${k.qpm_limit > 0 ? `<span class="badge badge-warning">QPM:${k.qpm_limit}</span>` : ''}
+
                             ${k.ip_whitelist_enabled ? `<span class="badge badge-success">IP限制</span>` : ''}
                         </div>
                     </div>

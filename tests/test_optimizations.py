@@ -249,8 +249,73 @@ class TestOptimizations(unittest.TestCase):
             mock_core.assert_called_with("上海", mock_bg, api_key)
             self.assertEqual(res_path["city_name"], "北京")
 
+    def test_timezone_utilities(self):
+        """验证 timezone 工具函数产出带有时区感知的北京时间并支持时区安全转换"""
+        from app.core.timezone import get_beijing_now, get_beijing_today_str, get_beijing_date, to_beijing_datetime, BEIJING_TZ
+        from zoneinfo import ZoneInfo
+        from datetime import timezone
+
+        bj_now = get_beijing_now()
+        self.assertEqual(bj_now.tzinfo.key, "Asia/Shanghai")
+        self.assertEqual(get_beijing_today_str(), bj_now.strftime("%Y-%m-%d"))
+        self.assertEqual(get_beijing_date(), bj_now.date())
+
+        # 验证 UTC 转换：UTC 2026-09-18 16:30 -> 北京时间 2026-09-19 00:30
+        utc_dt = datetime(2026, 9, 18, 16, 30, tzinfo=timezone.utc)
+        converted_bj = to_beijing_datetime(utc_dt)
+        self.assertEqual(converted_bj.year, 2026)
+        self.assertEqual(converted_bj.month, 9)
+        self.assertEqual(converted_bj.day, 19)
+        self.assertEqual(converted_bj.hour, 0)
+        self.assertEqual(converted_bj.minute, 30)
+
+    def test_celery_timezone_and_enable_utc_false(self):
+        """验证 Celery 配置中时区为 Asia/Shanghai 且 enable_utc 为 False"""
+        self.assertEqual(celery_app.conf.timezone, "Asia/Shanghai")
+        self.assertFalse(celery_app.conf.enable_utc)
+
+    def test_key_manager_uses_beijing_date(self):
+        """验证 KeyManager.record_usage 使用北京时间作为 Redis 键的日期"""
+        from app.core.timezone import get_beijing_today_str
+
+        mock_db = MagicMock()
+        mock_redis = MagicMock()
+        pipe_mock = MagicMock()
+        mock_redis.pipeline.return_value = pipe_mock
+
+        km = KeyManager(mock_db, mock_redis)
+        km.record_usage("hefeng", "test_key")
+
+        expected_today = get_beijing_today_str()
+        expected_key = f"stats:usage:hefeng:{expected_today}"
+
+        pipe_mock.hincrby.assert_called_once_with(expected_key, "test_key", 1)
+        pipe_mock.expire.assert_called_once_with(expected_key, 259200)
+
+    def test_client_key_manager_uses_beijing_date(self):
+        """验证 ClientKeyManager.track_usage 使用北京时间作为 Redis 键的日期"""
+        from app.core.timezone import get_beijing_today_str
+
+        with patch("app.core.client_key_manager.db_manager") as mock_dbm:
+            mock_db = MagicMock()
+            mock_redis = MagicMock()
+            pipe_mock = MagicMock()
+            mock_redis.pipeline.return_value = pipe_mock
+            mock_dbm.get_db.return_value = mock_db
+            mock_dbm.get_redis.return_value = mock_redis
+
+            ckm = ClientKeyManager()
+            ckm.track_usage("ck_test123")
+
+            expected_today = get_beijing_today_str()
+            expected_key = f"usage:client:ck_test123:{expected_today}"
+
+            pipe_mock.incr.assert_called_once_with(expected_key)
+            pipe_mock.expire.assert_called_once()
+
 if __name__ == "__main__":
     unittest.main()
+
 
 
 

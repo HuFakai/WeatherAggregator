@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import Optional
+from app.core.timezone import get_beijing_now
 
 class ClientKey(BaseModel):
     """
@@ -8,7 +9,8 @@ class ClientKey(BaseModel):
     """
     key: str = Field(..., description="唯一的 API 密钥")
     name: str = Field(..., description="密钥名称/描述")
-    created_at: datetime = Field(default_factory=datetime.now, description="创建时间")
+    created_at: datetime = Field(default_factory=get_beijing_now, description="创建时间 (北京时间)")
+
     
     # Security & Rate Limiting
     ip_whitelist_enabled: bool = Field(default=False, description="是否开启 IP 白名单")

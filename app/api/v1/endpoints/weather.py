@@ -2,7 +2,6 @@ from fastapi import APIRouter, HTTPException, Depends, Query, Security, Backgrou
 from fastapi.security import APIKeyHeader, APIKeyQuery
 from typing import Optional, Dict
 from datetime import datetime
-from zoneinfo import ZoneInfo
 import concurrent.futures
 
 from app.core.city_manager import city_manager
@@ -10,9 +9,11 @@ from app.core.db import db_manager, get_redis_client
 from app.models.weather import WeatherRecord
 from app.core.client_key_manager import client_key_manager
 from app.worker.fetchers import FetcherRegistry
+from app.core.timezone import get_beijing_now, get_beijing_date, to_beijing_datetime
 from app.core.logger import logger
 
 router = APIRouter()
+
 
 # 定义 API Key 来源 (Header 或 Query)
 api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
@@ -48,7 +49,7 @@ def save_weather_data(city_id: str, city_name: str, new_data: dict):
     """
     try:
         db = db_manager.get_db()
-        current_time_str = datetime.now(ZoneInfo("Asia/Shanghai")).isoformat()
+        current_time_str = get_beijing_now().isoformat()
         
         # 查询城市的 adcode
         city_info = db.cities.find_one({"_id": city_id})
@@ -112,8 +113,8 @@ async def _get_weather_core(
         elif isinstance(last_updated, datetime):
             last_updated_dt = last_updated
             
-        # 如果是今天的数据，则不需要更新
-        if last_updated_dt and last_updated_dt.date() == datetime.now(ZoneInfo("Asia/Shanghai")).date():
+        # 如果是今天的数据 (以北京时间为准)，则不需要更新
+        if last_updated_dt and to_beijing_datetime(last_updated_dt).date() == get_beijing_date():
             # 检查是否缺失活跃渠道数据
             active_channels = db.channel_configs.find({"is_active": True})
             active_channel_names = [c["_id"] for c in active_channels]
@@ -171,9 +172,10 @@ async def _get_weather_core(
     return {
         "city_name": city_name,
         "_id": city_id,
-        "last_updated_at": datetime.now(ZoneInfo("Asia/Shanghai")).isoformat(),
+        "last_updated_at": get_beijing_now().isoformat(),
         "sources": new_sources_data
     }
+
 
 @router.get("", response_model=WeatherRecord, summary="获取指定城市天气 (Query 参数)")
 async def get_weather_by_query(

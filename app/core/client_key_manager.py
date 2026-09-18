@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from typing import List, Optional, Dict
 from app.core.db import db_manager
 from app.models.client_key import ClientKey
+from app.core.timezone import get_beijing_now, get_beijing_today_str
 from app.core.logger import logger
 
 class ClientKeyManager:
@@ -29,7 +30,7 @@ class ClientKeyManager:
         client_key = ClientKey(
             key=key_str,
             name=name,
-            created_at=datetime.now()
+            created_at=get_beijing_now()
         )
         
         self.db[self.COLLECTION].insert_one(client_key.model_dump())
@@ -44,9 +45,9 @@ class ClientKeyManager:
         if result.deleted_count > 0:
             logger.info(f"Deleted client key: {key}")
             
-            # 清理 Redis 统计数据
+            # 清理 Redis 统计数据 (按北京时间清理)
             try:
-                today = datetime.now()
+                today = get_beijing_now()
                 pipe = self.redis.pipeline()
                 for i in range(self.STATS_RETENTION_DAYS + 1): # 多清理一天以防万一
                     date = today - timedelta(days=i)
@@ -57,6 +58,7 @@ class ClientKeyManager:
                 logger.info(f"Cleaned up Redis stats for client key: {key}")
             except Exception as e:
                 logger.error(f"Failed to clean up Redis stats for {key}: {e}")
+
                 
             return True
         return False
@@ -93,7 +95,7 @@ class ClientKeyManager:
         # 若修改了 key，迁移 Redis 中的调用统计
         if new_key and new_key != key:
             try:
-                today = datetime.now()
+                today = get_beijing_now()
                 read_pipe = self.redis.pipeline()
                 dates = [(today - timedelta(days=i)).strftime("%Y-%m-%d") for i in range(self.STATS_RETENTION_DAYS + 1)]
                 for d in dates:
@@ -141,8 +143,8 @@ class ClientKeyManager:
         # 2. QPM 速率限制
         if client_key.qpm_limit > 0:
             # Redis Key: rate_limit:client:{key}:{minute_timestamp}
-            # 使用简单的固定窗口计数
-            current_minute = int(datetime.now().timestamp() // 60)
+            # 使用简单的固定窗口计数 (基于北京时间当前分钟)
+            current_minute = int(get_beijing_now().timestamp() // 60)
             rate_key = f"rate_limit:client:{key}:{current_minute}"
             
             # 使用 pipeline 保证 incr 与 expire 必然同时生效，彻底杜绝无 TTL 累积无用键
@@ -167,10 +169,10 @@ class ClientKeyManager:
 
     def track_usage(self, key: str):
         """
-        记录调用次数 (Redis)
+        记录调用次数 (Redis，按北京时间天切分)
         Key 格式: usage:client:{key}:{date_str}
         """
-        today = datetime.now().strftime("%Y-%m-%d")
+        today = get_beijing_today_str()
         redis_key = f"{self.STATS_PREFIX}:{key}:{today}"
         
         pipe = self.redis.pipeline()
@@ -180,10 +182,10 @@ class ClientKeyManager:
 
     def get_stats(self, key: str) -> Dict[str, int]:
         """
-        获取最近 7 天的统计数据
+        获取最近 7 天的统计数据 (按北京时间回溯)
         """
         stats = {}
-        today = datetime.now()
+        today = get_beijing_now()
         
         for i in range(self.STATS_RETENTION_DAYS):
             date = today - timedelta(days=i)
@@ -194,5 +196,6 @@ class ClientKeyManager:
             stats[date_str] = int(count) if count else 0
             
         return stats
+
 
 client_key_manager = ClientKeyManager()

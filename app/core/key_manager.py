@@ -3,6 +3,7 @@ from typing import Optional, List, Dict
 from pymongo.database import Database
 from redis import Redis
 from datetime import datetime, timedelta
+from app.core.timezone import get_beijing_now, get_beijing_today_str
 from app.core.logger import logger
 
 class KeyManager: # Renamed from RandomKeyManager to generic KeyManager if preferred, but keeping class name for compatibility
@@ -42,9 +43,8 @@ class KeyManager: # Renamed from RandomKeyManager to generic KeyManager if prefe
             if self.redis.exists(invalid_key):
                 continue
 
-            # 4. 检查 Redis 中是否超过每日限额
-            # 直接检查今日统计数据，实现每日自动重置
-            today = datetime.now().strftime("%Y-%m-%d")
+            # 4. 检查 Redis 中是否超过每日限额 (以北京时间为准)
+            today = get_beijing_today_str()
             usage_key = f"stats:usage:{channel_name}:{today}"
             current_usage = self.redis.hget(usage_key, key)
             
@@ -68,11 +68,11 @@ class KeyManager: # Renamed from RandomKeyManager to generic KeyManager if prefe
 
     def record_usage(self, channel_name: str, key: str):
         """
-        记录 Key 的每日调用次数
+        记录 Key 的每日调用次数 (以北京时间切分天)
         保留 3 天数据
         Redis Key: stats:usage:{channel}:{date} -> Hash {key: count}
         """
-        today = datetime.now().strftime("%Y-%m-%d")
+        today = get_beijing_today_str()
         redis_key = f"stats:usage:{channel_name}:{today}"
         
         try:
@@ -89,15 +89,15 @@ class KeyManager: # Renamed from RandomKeyManager to generic KeyManager if prefe
         
         参数:
             duration: 失效时长(秒)，默认 24 小时
-            until_midnight: 是否失效直到当天午夜 (用于每日限额耗尽的情况)
+            until_midnight: 是否失效直到当天午夜 (用于每日限额耗尽的情况，以北京时间计算)
         """
         invalid_key = f"weather:invalid:{channel_name}:{key}"
         
         if until_midnight:
-            now = datetime.now()
-            # 计算距离明天 00:00:00 的秒数
-            tomorrow = now.replace(hour=0, minute=0, second=0, microsecond=0).timestamp() + 86400
-            duration = int(tomorrow - now.timestamp())
+            now = get_beijing_now()
+            # 计算距离北京时间明天 00:00:00 的秒数
+            tomorrow = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
+            duration = int((tomorrow - now).total_seconds())
             # 至少保留 60 秒，避免边界情况
             duration = max(duration, 60)
             
@@ -109,10 +109,10 @@ class KeyManager: # Renamed from RandomKeyManager to generic KeyManager if prefe
 
     def delete_key_stats(self, channel_name: str, key: str):
         """
-        清理 Key 的统计数据
+        清理 Key 的统计数据 (按北京时间清理过去 4 天)
         """
         try:
-            today = datetime.now()
+            today = get_beijing_now()
             pipe = self.redis.pipeline()
             # 统计数据保留3天，清理过去4天以防万一
             for i in range(4):
@@ -132,3 +132,4 @@ class KeyManager: # Renamed from RandomKeyManager to generic KeyManager if prefe
 
 # 兼容旧代码引用
 RandomKeyManager = KeyManager
+

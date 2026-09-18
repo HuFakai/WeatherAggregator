@@ -6,8 +6,10 @@ from app.core.client_key_manager import client_key_manager
 from app.models.client_key import ClientKey
 from pydantic import BaseModel
 import datetime
+from app.core.timezone import get_beijing_date
 
 router = APIRouter()
+
 
 # Pydantic Models
 class KeyAddRequest(BaseModel):
@@ -112,9 +114,10 @@ async def list_channels(admin_auth: str = Depends(verify_admin_access)):
     
     channels = list(db.channel_configs.find())
     
-    # 获取 API Key 使用统计 (最近 3 天)
-    today = datetime.date.today()
+    # 获取 API Key 使用统计 (最近 3 天，按北京时间计算)
+    today = get_beijing_date()
     dates = [(today - datetime.timedelta(days=i)).strftime("%Y-%m-%d") for i in range(3)]
+
     
     for channel in channels:
         channel_name = channel["_id"]

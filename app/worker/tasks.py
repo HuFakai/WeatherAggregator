@@ -1,13 +1,14 @@
 from celery import shared_task
 from datetime import datetime
-from zoneinfo import ZoneInfo
 from pymongo import MongoClient
 from redis import Redis
 from app.celery_app import celery_app
 from app.worker.fetchers import FetcherRegistry
 from app.core.city_manager import CityManager
 from app.core.db import get_db
+from app.core.timezone import get_beijing_now
 from app.core.logger import logger
+
 
 def get_fetcher(channel_name):
     return FetcherRegistry.get_fetcher(channel_name)
@@ -88,10 +89,11 @@ def update_city_weather(city_identifier: str, channel_name: str):
         
         update_data = {
             f"sources.{channel_name}": [w.model_dump() for w in standard_weather_list],
-            "last_updated_at":datetime.now(ZoneInfo("Asia/Shanghai")).isoformat(),
+            "last_updated_at": get_beijing_now().isoformat(),
             "city_name": city_info.get("name"),
             "adcode": adcode
         }
+
         
         result = collection.update_one(
             {"_id": adcode},
