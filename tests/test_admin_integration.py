@@ -6,6 +6,7 @@ Uses FastAPI TestClient with mocked MongoDB and Redis.
 
 import sys
 import os
+import datetime
 from unittest.mock import MagicMock, patch
 import pytest
 
@@ -61,6 +62,18 @@ def test_admin_full_workflow():
         from app.core.client_key_manager import client_key_manager
         client_key_manager.db = mock_db
         client_key_manager.redis = mock_redis
+
+        from app.core.city_manager import city_manager
+        city_manager.db = mock_db
+        mock_db.cities.find_one.return_value = {"_id": "110000", "name": "北京", "adcode": "110000"}
+        mock_db.weather_records.find_one.return_value = {
+            "_id": "110000",
+            "city_name": "北京",
+            "sources": {
+                "hefeng": [{"temp_high": 23, "temp_low": 12, "weather_text": "晴", "wind_dir": "东南风", "wind_scale": "2级", "humidity": 48}]
+            },
+            "last_updated_at": datetime.datetime.now().isoformat()
+        }
 
         from app.main import app
         client = TestClient(app)
@@ -166,7 +179,23 @@ def test_admin_full_workflow():
             json={"key": "hf_new_key_999"}
         )
         assert del_key_resp.status_code == 200
-        print("✅ 7. Add/Delete Channel Key pool endpoints verified")
+        # 8. Test Multi-Source Weather Insights Endpoints
+        cities_resp = client.get("/api/v1/admin/insights/cities", headers=admin_headers)
+        assert cities_resp.status_code == 200
+        cities_data = cities_resp.json()
+        assert "data" in cities_data
+        assert len(cities_data["data"]) >= 10
+        assert any(c["name"] == "北京" for c in cities_data["data"])
+
+        weather_resp = client.get("/api/v1/admin/insights/weather?city=北京", headers=admin_headers)
+        assert weather_resp.status_code == 200
+        w_json = weather_resp.json()
+        assert "data" in w_json
+        assert w_json["data"]["city"] == "北京"
+        assert "now" in w_json["data"]
+        assert "comparison_table" in w_json["data"]
+        assert "indices" in w_json["data"]
+        print("✅ 8. Multi-Source Weather Insights endpoints verified")
 
         print("\n🎉 ALL ADMIN INTEGRATION TESTS PASSED SUCCESSFULLY!")
 

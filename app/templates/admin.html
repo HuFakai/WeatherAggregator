@@ -60,61 +60,11 @@
             letter-spacing: -0.01em;
         }
 
-        /* Top Preview Hub Navigator */
-        .preview-banner {
-            background: #0b0d12;
-            border-bottom: 1px solid var(--border-base);
-            padding: 6px 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            font-size: 12px;
-            z-index: 50;
-        }
-        .preview-banner a {
-            color: var(--text-secondary);
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            transition: color 0.15s;
-        }
-        .preview-banner a:hover {
-            color: var(--text-primary);
-        }
-        .scheme-switcher {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .scheme-tag {
-            padding: 2px 8px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: 500;
-            text-decoration: none;
-            transition: all 0.15s;
-        }
-        .scheme-tag.active {
-            background: var(--accent-blue);
-            color: #fff;
-            font-weight: 600;
-        }
-        .scheme-tag.inactive {
-            background: var(--bg-panel);
-            color: var(--text-muted);
-            border: 1px solid var(--border-base);
-        }
-        .scheme-tag.inactive:hover {
-            color: var(--text-primary);
-            border-color: var(--border-hover);
-        }
-
         /* App Layout */
         .app-layout {
             display: flex;
             flex: 1;
-            height: calc(100vh - 33px);
+            height: 100vh;
             overflow: hidden;
             position: relative;
         }
@@ -1326,22 +1276,6 @@
         </div>
     </div>
 
-
-    <!-- Top Preview Hub Navigator -->
-    <div class="preview-banner">
-        <a href="index.html">
-            <i data-lucide="layout-grid" style="width: 14px; height: 14px;"></i>
-            <span>返回方案展示中枢 (Preview Hub)</span>
-        </a>
-        <div class="scheme-switcher">
-            <span style="color: var(--text-muted); margin-right: 4px;">当前方案：</span>
-            <a href="concept_a_bento.html" class="scheme-tag inactive">方案 A (Bento 监控大屏)</a>
-            <a href="concept_b_linear.html" class="scheme-tag inactive">方案 B (原 Linear 原型)</a>
-            <a href="complete_aetherial_ui.html" class="scheme-tag active">★ 方案 B 全功能融合版</a>
-            <a href="concept_c_clarity.html" class="scheme-tag inactive">方案 C (北欧明暗中枢)</a>
-        </div>
-    </div>
-
     <div class="app-layout">
         <!-- Sidebar Navigation -->
         <aside class="sidebar">
@@ -1697,7 +1631,7 @@
                         <div class="city-search-bar">
                             <div style="position: relative;">
                                 <i data-lucide="search" style="position: absolute; left: 9px; top: 9px; width: 13px; height: 13px; color: var(--text-muted);"></i>
-                                <input type="text" class="search-input-field" placeholder="搜索城市名、拼音或 Adcode..." id="citySearchInput" oninput="filterCityList(this.value)">
+                                <input type="text" class="search-input-field" placeholder="搜索城市名、拼音或 Adcode..." id="citySearchInput" oninput="filterCityList(this.value)" onkeydown="if(event.key==='Enter') searchOrSelectCity(this.value)">
                             </div>
                         </div>
                         <div class="city-items-list" id="cityListWrap">
@@ -1740,17 +1674,17 @@
                             <div>
                                 <div style="display: flex; justify-content: space-between; align-items: center;">
                                     <span style="font-size: 12px; color: var(--text-muted);" id="currentCityTag">北京市 (110000) · 今日融合实况</span>
-                                    <span style="font-size: 10px; background: rgba(56, 189, 248, 0.15); color: var(--accent-cyan); padding: 1px 6px; border-radius: 4px;">多源已核对</span>
+                                    <span style="font-size: 10px; background: rgba(56, 189, 248, 0.15); color: var(--accent-cyan); padding: 1px 6px; border-radius: 4px;" id="insightSyncBadge">多源已核对</span>
                                 </div>
                                 <div class="now-temp-display" id="detailNowTemp">23°</div>
                                 <div style="font-size: 14px; color: #fff; display: flex; align-items: center; gap: 6px;" id="detailNowCond">
                                     <i data-lucide="sun" style="width: 16px; height: 16px; color: var(--accent-amber);"></i>
                                     <span>晴转多云 · 东南风 2级</span>
                                 </div>
-                                <div style="font-size: 12px; color: var(--text-muted); margin-top: 8px;">
+                                <div style="font-size: 12px; color: var(--text-muted); margin-top: 8px;" id="detailNowExtra">
                                     空气质量: <strong style="color: var(--accent-emerald);">优 (AQI 32)</strong> · 湿度 48%
                                 </div>
-                                <button class="btn-primary" style="margin-top: 16px; width: 100%; justify-content: center;" onclick="forceRefreshCurrentCity()">
+                                <button id="btnForceInsightRefresh" class="btn-primary" style="margin-top: 16px; width: 100%; justify-content: center;" onclick="forceRefreshCurrentCity()">
                                     <i data-lucide="rotate-cw" style="width: 13px; height: 13px;"></i>
                                     <span>现场发起全源强制聚合</span>
                                 </button>
@@ -3017,6 +2951,15 @@
             renderClientsView();
             renderSchedulerView();
             populatePlaygroundKeys();
+
+            // Load Insights Cross-Check data
+            try {
+                await loadInsightCities();
+                await loadInsightCityWeather(currentActiveCity, false);
+            } catch (e) {
+                console.warn('Insights load deferred or offline:', e);
+            }
+
             lucide.createIcons();
         }
 
@@ -3270,28 +3213,26 @@
                     const d2 = stats[dates[2]] || 0;
                     const total3d = kp.total_3d || (d0 + d1 + d2);
                     const isKeyActive = kp.status === 'active';
+                    const dailyLimit = kp.daily_limit || 2000;
+                    const usedPct = dailyLimit > 0 ? Math.round((d0 / dailyLimit) * 100) : 0;
+                    const descText = kp.desc || kp.note || kp.description || '-';
 
                     rowsHtml += `
                     <tr>
+                        <!-- 1. 所属渠道 -->
                         <td><strong style="color: #fff;">${chName}</strong></td>
+
+                        <!-- 2. Key 令牌 / ID -->
                         <td>
                             <div style="display: flex; align-items: center; gap: 8px;">
-                                <span class="token-mono">${kp.key}</span>
+                                <span class="token-mono" style="max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${kp.key}">${kp.key}</span>
                                 <button class="btn-action-sm" title="复制" onclick="copyToClipboard('${kp.key}')">
                                     <i data-lucide="copy" style="width: 12px; height: 12px;"></i>
                                 </button>
                             </div>
                         </td>
-                        <td>${(kp.daily_limit || 2000).toLocaleString()} 次/日</td>
-                        <td>
-                            <div class="sparkline-wrap" title="近3日趋势: ${d2} -> ${d1} -> ${d0}">
-                                <div class="spark-bar" style="height: ${Math.max(4, Math.min(22, d2 / 20))}px;"></div>
-                                <div class="spark-bar" style="height: ${Math.max(4, Math.min(22, d1 / 20))}px;"></div>
-                                <div class="spark-bar" style="height: ${Math.max(4, Math.min(22, d0 / 20))}px;"></div>
-                                <span style="font-size: 11px; font-family: var(--font-mono); margin-left: 6px; color: var(--text-muted);">${d0}次 (今)</span>
-                            </div>
-                        </td>
-                        <td><strong style="font-family: var(--font-mono); color: #fff;">${total3d.toLocaleString()} 次</strong></td>
+
+                        <!-- 3. 启用状态 -->
                         <td>
                             <div style="display: flex; align-items: center; gap: 8px;">
                                 <label class="switch">
@@ -3303,6 +3244,32 @@
                                 </span>
                             </div>
                         </td>
+
+                        <!-- 4. 每日限额 -->
+                        <td>${dailyLimit.toLocaleString()} 次/日</td>
+
+                        <!-- 5. 今日已用 -->
+                        <td>
+                            <span style="font-family: var(--font-mono); font-weight: 600; color: #fff;">${d0.toLocaleString()} 次</span>
+                            <span style="color: var(--text-muted); font-size: 11px; margin-left: 4px;">(${usedPct}%)</span>
+                        </td>
+
+                        <!-- 6. 近3日调用统计 -->
+                        <td>
+                            <div class="sparkline-wrap" title="近3日趋势: ${d2} -> ${d1} -> ${d0}">
+                                <div class="spark-bar" style="height: ${Math.max(4, Math.min(22, d2 / 20))}px;"></div>
+                                <div class="spark-bar" style="height: ${Math.max(4, Math.min(22, d1 / 20))}px;"></div>
+                                <div class="spark-bar" style="height: ${Math.max(4, Math.min(22, d0 / 20))}px;"></div>
+                                <span style="font-size: 11px; font-family: var(--font-mono); margin-left: 6px; color: var(--text-muted);">${total3d.toLocaleString()} 次</span>
+                            </div>
+                        </td>
+
+                        <!-- 7. 备注描述 -->
+                        <td>
+                            <span style="color: var(--text-muted); font-size: 12px;">${descText}</span>
+                        </td>
+
+                        <!-- 8. 操作 -->
                         <td>
                             <button class="btn-action-sm" style="color: var(--accent-rose);" title="移除此 Key" onclick="deleteChannelKey('${chId}', '${kp.key}')">
                                 <i data-lucide="trash-2" style="width: 13px; height: 13px;"></i>
@@ -3314,7 +3281,7 @@
             });
 
             if (!rowsHtml) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">各渠道暂无 Key，请点击上方添加</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 24px;">各渠道暂无 Key，请点击上方添加</td></tr>';
             } else {
                 tbody.innerHTML = rowsHtml;
             }
@@ -3817,22 +3784,153 @@
             }
         }
 
-        // --- Insights Cross-Check Tab (Canvas & City Filter) ---
+        // --- Insights Cross-Check Tab (Canvas & City Filter & Real Data) ---
         let currentActiveCity = '北京';
 
-        function selectInsightCity(cityName, adcode, btn) {
+        function getWeatherIconName(condText) {
+            if (!condText) return 'sun';
+            const t = condText.toLowerCase();
+            if (t.includes('雷')) return 'cloud-lightning';
+            if (t.includes('雨')) return 'cloud-rain';
+            if (t.includes('雪')) return 'cloud-snow';
+            if (t.includes('阴')) return 'cloud';
+            if (t.includes('多云')) return 'cloud-sun';
+            return 'sun';
+        }
+
+        async function loadInsightCities() {
+            const wrap = document.getElementById('cityListWrap');
+            if (!wrap) return;
+
+            try {
+                const res = await apiCall('/api/v1/admin/insights/cities');
+                if (res && res.data && Array.isArray(res.data) && res.data.length > 0) {
+                    wrap.innerHTML = res.data.map(c => {
+                        const isActive = (c.name === currentActiveCity || c.display_name === currentActiveCity);
+                        return `
+                        <button class="city-pick-item ${isActive ? 'active' : ''}" data-city="${c.name}" onclick="selectInsightCity('${c.name}', '${c.adcode}', this)">
+                            <div>
+                                <div style="font-weight: 600; color: #fff;">${c.display_name || c.name + '市'}</div>
+                                <div style="font-size: 11px; color: var(--text-muted); font-family: var(--font-mono);">${c.adcode} · ${c.sync_channels || 3} 渠道同步</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <span style="font-family: var(--font-mono); font-weight: 600; color: var(--accent-cyan);">${c.temp}°C</span>
+                                <div style="font-size: 10px; color: var(--text-muted);">${c.text || '晴'}</div>
+                            </div>
+                        </button>
+                        `;
+                    }).join('');
+                }
+            } catch (err) {
+                console.warn('Failed to load insight cities from API, keeping current list:', err);
+            }
+        }
+
+        async function selectInsightCity(cityName, adcode, btn) {
             currentActiveCity = cityName;
-            document.querySelectorAll('.city-pick-item').forEach(b => b.classList.remove('active'));
-            if (btn) btn.classList.add('active');
+            document.querySelectorAll('.city-pick-item').forEach(b => {
+                if (b === btn || b.dataset.city === cityName || b.textContent.includes(cityName)) {
+                    b.classList.add('active');
+                } else {
+                    b.classList.remove('active');
+                }
+            });
 
-            const data = weatherDatabase[cityName] || weatherDatabase['北京'];
-            document.getElementById('currentCityTag').textContent = `${cityName}市 (${data.code}) · 今日融合实况`;
-            document.getElementById('detailNowTemp').textContent = data.temp;
-            document.getElementById('detailNowCond').querySelector('span').textContent = data.cond;
+            await loadInsightCityWeather(cityName, false);
+        }
 
-            renderTableBody(data.table);
-            renderCompareChart();
-            quickNotify(`已加载 ${cityName}市 多源气象数据`);
+        function searchOrSelectCity(query) {
+            const q = (query || '').trim();
+            if (!q) return;
+
+            // Check if there is an exact or prefix match in the DOM
+            const items = document.querySelectorAll('.city-pick-item');
+            for (let item of items) {
+                if (item.textContent.includes(q)) {
+                    item.click();
+                    return;
+                }
+            }
+
+            // Direct fetch custom city
+            selectInsightCity(q, '', null);
+        }
+
+        async function loadInsightCityWeather(cityName, forceRefresh = false) {
+            const refreshBtn = document.getElementById('btnForceInsightRefresh');
+            if (refreshBtn && forceRefresh) {
+                refreshBtn.disabled = true;
+                refreshBtn.innerHTML = '<i data-lucide="loader-2" class="spin-icon" style="width: 13px; height: 13px;"></i><span>全源并发强刷中...</span>';
+                lucide.createIcons();
+            }
+
+            try {
+                const res = await apiCall(`/api/v1/admin/insights/weather?city=${encodeURIComponent(cityName)}&force_refresh=${forceRefresh}`);
+                if (res && res.data) {
+                    const d = res.data;
+                    appState.insightWeather = d;
+
+                    // 1. Update Hero Realtime Card
+                    const cityTag = document.getElementById('currentCityTag');
+                    if (cityTag) cityTag.textContent = `${d.city} (${d.adcode || ''}) · 今日多源融合实况`;
+
+                    const tempEl = document.getElementById('detailNowTemp');
+                    if (tempEl) tempEl.textContent = `${Math.round(d.now.temperature || 0)}°`;
+
+                    const condEl = document.getElementById('detailNowCond');
+                    if (condEl) {
+                        const iconName = getWeatherIconName(d.now.text);
+                        condEl.innerHTML = `
+                            <i data-lucide="${iconName}" style="width: 16px; height: 16px; color: var(--accent-amber);"></i>
+                            <span>${d.now.text || '晴'} · ${d.now.wind_dir || ''} ${d.now.wind_scale || ''}</span>
+                        `;
+                    }
+
+                    const extraEl = document.getElementById('detailNowExtra');
+                    if (extraEl) {
+                        const aqiText = d.now.air_quality ? `${d.now.air_quality.category} (AQI ${d.now.air_quality.aqi})` : '优 (AQI 32)';
+                        const srcText = d.now.source ? ` · 主采源: ${d.now.source}` : '';
+                        extraEl.innerHTML = `空气质量: <strong style="color: var(--accent-emerald);">${aqiText}</strong> · 湿度 ${d.now.humidity || 50}%${srcText}`;
+                    }
+
+                    // 2. Render Chart
+                    renderCompareChart(d);
+
+                    // 3. Render Table
+                    renderTableBody(d.comparison_table || []);
+
+                    // 4. Render Lifestyle
+                    renderLifestyleCards(d.indices || []);
+
+                    lucide.createIcons();
+
+                    if (forceRefresh) {
+                        quickNotify(`已完成 ${cityName} 全源强制并发拉取与异构聚合核验`);
+                    } else {
+                        quickNotify(`已加载 ${cityName} 多源气象数据`);
+                    }
+                    return;
+                }
+            } catch (err) {
+                console.error('Failed to fetch insight weather:', err);
+            } finally {
+                if (refreshBtn) {
+                    refreshBtn.disabled = false;
+                    refreshBtn.innerHTML = '<i data-lucide="rotate-cw" style="width: 13px; height: 13px;"></i><span>现场发起全源强制聚合</span>';
+                    lucide.createIcons();
+                }
+            }
+
+            // Fallback to local cached preset if API is unreachable
+            const fallback = weatherDatabase[cityName] || weatherDatabase['北京'];
+            if (fallback) {
+                document.getElementById('currentCityTag').textContent = `${cityName} (${fallback.code}) · 今日融合实况 (预置)`;
+                document.getElementById('detailNowTemp').textContent = fallback.temp;
+                document.getElementById('detailNowCond').querySelector('span').textContent = fallback.cond;
+                renderTableBody(fallback.table);
+                renderCompareChart(fallback);
+                quickNotify(`已加载 ${cityName} 离线报文`);
+            }
         }
 
         function renderTableBody(tableRows) {
@@ -3841,23 +3939,44 @@
             tbody.innerHTML = '';
             tableRows.forEach(row => {
                 const tr = document.createElement('tr');
+                const ok = (row.is_ok !== undefined ? row.is_ok : row.ok);
+                const diffLabel = row.diff_text || row.diff || '一致';
+                const hfVal = row.hefeng || row.hf || '-';
+                const bdVal = row.baidu || row.bd || '-';
+                const ykVal = row.yitian || row.yike || row.yk || '-';
+
                 tr.innerHTML = `
                     <td style="font-weight: 600; color: #fff;">${row.date}</td>
-                    <td><span style="font-family: var(--font-mono); font-size: 11.5px;">${row.hf}</span></td>
-                    <td><span style="font-family: var(--font-mono); font-size: 11.5px;">${row.bd}</span></td>
-                    <td><span style="font-family: var(--font-mono); font-size: 11.5px;">${row.yk}</span></td>
-                    <td><span class="delta-chip ${row.ok ? 'delta-ok' : 'delta-warn'}">${row.diff}</span></td>
+                    <td><span style="font-family: var(--font-mono); font-size: 11.5px;">${hfVal}</span></td>
+                    <td><span style="font-family: var(--font-mono); font-size: 11.5px;">${bdVal}</span></td>
+                    <td><span style="font-family: var(--font-mono); font-size: 11.5px;">${ykVal}</span></td>
+                    <td><span class="delta-chip ${ok ? 'delta-ok' : 'delta-warn'}">${diffLabel}</span></td>
                 `;
                 tbody.appendChild(tr);
             });
         }
 
-        function renderCompareChart() {
+        function renderLifestyleCards(indices) {
+            const container = document.getElementById('lifestyleCardsRow');
+            if (!container || !Array.isArray(indices) || indices.length === 0) return;
+
+            container.innerHTML = indices.map(idx => `
+                <div style="background: var(--bg-subtle); border: 1px solid var(--border-base); border-radius: var(--radius-sm); padding: 12px;">
+                    <div style="font-size: 11px; color: var(--text-muted);">${idx.name}</div>
+                    <div style="font-size: 14px; font-weight: 600; color: #fff; margin: 4px 0;">${idx.level || '适宜'}</div>
+                    <div style="font-size: 11px; color: var(--text-secondary);">${idx.desc || '-'}</div>
+                </div>
+            `).join('');
+        }
+
+        function renderCompareChart(customData) {
             const canvas = document.getElementById('weatherCompareChart');
             if (!canvas) return;
             const ctx = canvas.getContext('2d');
             const dpr = window.devicePixelRatio || 1;
             const rect = canvas.getBoundingClientRect();
+
+            if (rect.width === 0 || rect.height === 0) return;
 
             canvas.width = rect.width * dpr;
             canvas.height = rect.height * dpr;
@@ -3869,18 +3988,45 @@
 
             ctx.clearRect(0, 0, w, h);
 
-            const data = weatherDatabase[currentActiveCity] || weatherDatabase['北京'];
-            const allTemps = [...data.hfTemps, ...data.bdTemps, ...data.ykTemps];
+            const data = customData || appState.insightWeather || weatherDatabase[currentActiveCity] || weatherDatabase['北京'];
+            
+            // Extract temperature curves
+            let hfTemps = [];
+            let bdTemps = [];
+            let ykTemps = [];
+            let days = [];
+
+            if (data.channel_temps) {
+                hfTemps = data.channel_temps.hefeng || [];
+                bdTemps = data.channel_temps.baidu || [];
+                ykTemps = data.channel_temps.yitian || data.channel_temps.yike || [];
+                days = (data.days || []).map(d => {
+                    const match = d.match(/^[^\s(]+/);
+                    return match ? match[0] : d;
+                });
+            } else {
+                hfTemps = data.hfTemps || [];
+                bdTemps = data.bdTemps || [];
+                ykTemps = data.ykTemps || [];
+                days = data.days || ['D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7'];
+            }
+
+            const allTemps = [...hfTemps, ...bdTemps, ...ykTemps].filter(v => typeof v === 'number' && !isNaN(v));
+            if (allTemps.length === 0) {
+                allTemps.push(15, 25);
+            }
             const minT = Math.min(...allTemps) - 2;
             const maxT = Math.max(...allTemps) + 2;
 
-            const getX = i => pad.left + (i / (data.days.length - 1)) * (w - pad.left - pad.right);
+            const daysCount = Math.max(days.length, 2);
+            const getX = i => pad.left + (i / (daysCount - 1)) * (w - pad.left - pad.right);
             const getY = val => pad.top + (1 - (val - minT) / (maxT - minT)) * (h - pad.top - pad.bottom);
 
             // Grid lines
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
             ctx.lineWidth = 1;
-            for (let t = Math.floor(minT); t <= Math.ceil(maxT); t += 3) {
+            const step = Math.max(2, Math.round((maxT - minT) / 4));
+            for (let t = Math.floor(minT); t <= Math.ceil(maxT); t += step) {
                 const y = getY(t);
                 ctx.beginPath();
                 ctx.moveTo(pad.left, y);
@@ -3895,7 +4041,7 @@
 
             // X-axis days
             ctx.textAlign = 'center';
-            data.days.forEach((day, i) => {
+            days.forEach((day, i) => {
                 const x = getX(i);
                 ctx.fillStyle = '#94a3b8';
                 ctx.font = '11px "Inter"';
@@ -3903,6 +4049,7 @@
             });
 
             function drawLine(temps, color) {
+                if (!temps || temps.length === 0) return;
                 ctx.beginPath();
                 for (let i = 0; i < temps.length; i++) {
                     const x = getX(i);
@@ -3931,9 +4078,9 @@
                 });
             }
 
-            drawLine(data.hfTemps, '#38bdf8');
-            drawLine(data.bdTemps, '#10b981');
-            drawLine(data.ykTemps, '#f59e0b');
+            drawLine(hfTemps, '#38bdf8');
+            drawLine(bdTemps, '#10b981');
+            drawLine(ykTemps, '#f59e0b');
         }
 
         function filterCityList(query) {
@@ -3945,8 +4092,8 @@
             });
         }
 
-        function forceRefreshCurrentCity() {
-            quickNotify(`已强制唤起 Fetcher 并行拉取 ${currentActiveCity} 最新三方报文`);
+        async function forceRefreshCurrentCity() {
+            await loadInsightCityWeather(currentActiveCity, true);
         }
 
         // Global manual refresh
@@ -4026,6 +4173,8 @@
             const key = localStorage.getItem('adminKey');
             if (!key) {
                 showLoginModal();
+                renderTableBody(weatherDatabase['北京'].table);
+                setTimeout(renderCompareChart, 100);
             } else {
                 try {
                     const res = await fetch('/api/v1/admin/login', {
@@ -4038,14 +4187,15 @@
                         await loadAllData();
                     } else {
                         showLoginModal();
+                        renderTableBody(weatherDatabase['北京'].table);
+                        setTimeout(renderCompareChart, 100);
                     }
                 } catch(e) {
                     showLoginModal();
+                    renderTableBody(weatherDatabase['北京'].table);
+                    setTimeout(renderCompareChart, 100);
                 }
             }
-
-            renderTableBody(weatherDatabase['北京'].table);
-            setTimeout(renderCompareChart, 100);
         });
     </script>
 </body>
